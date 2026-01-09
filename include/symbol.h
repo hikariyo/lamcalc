@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#define SYM_INVALID "<INVALID>"
+
 typedef uint32_t sym_t;
 
 void sym_init();

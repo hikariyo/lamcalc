@@ -31,7 +31,7 @@ sym_t sym_intern(const char *name) {
 
 const char *sym_name(sym_t sym) {
     if (sym < 0 || sym > sym_count) {
-        return "<INVALID>";
+        return SYM_INVALID;
     }
     return sym_table[sym];
 }
