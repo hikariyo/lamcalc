@@ -30,4 +30,14 @@ extern int test_failed_count;
     }                                                                          \
     static int __Test_##name()
 
+#define TEST_ASSERT(cond)                                                      \
+    do {                                                                       \
+        if (!cond) {                                                           \
+            printf("  %s:%d: " COLOR_RED "Failure" COLOR_RESET "\n", __FILE__, \
+                   __LINE__);                                                  \
+            printf("    Expected: %s\n", #cond);                               \
+            return FAILED;                                                     \
+        }                                                                      \
+    } while (0)
+
 #endif // TEST_H
