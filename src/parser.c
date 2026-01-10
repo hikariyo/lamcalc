@@ -11,7 +11,7 @@ static term_t *_parse_abs(token_t **tokens, token_t *end) {
 
     t = t->next;
     assert(t->type == TOKEN_NAME);
-    sym_t param = t->sym;
+    const char *param = t->sym;
 
     t = t->next;
     assert(t->type == TOKEN_DOT);

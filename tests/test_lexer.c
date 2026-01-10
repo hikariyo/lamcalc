@@ -1,5 +1,4 @@
 #include "lexer.h"
-#include "symbol.h"
 #include "test.h"
 #include <string.h>
 
@@ -9,7 +8,7 @@
 
 #define ASSERT_TOKEN_NAME(t, expected_name)                                    \
     ASSERT_TOKEN(t, TOKEN_NAME);                                               \
-    TEST_ASSERT(!strcmp(sym_name((t)->sym), (expected_name)))
+    TEST_ASSERT(!strcmp(((t)->sym), (expected_name)))
 
 TEST(lexer_basic) {
     const char *source = "\\.()";

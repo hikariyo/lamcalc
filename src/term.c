@@ -1,5 +1,4 @@
 #include "term.h"
-#include "symbol.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,11 +17,11 @@ static term_t *_copy(const term_t *term) {
 }
 
 // Consumes 'term'.
-static term_t *_subst(term_t *term, sym_t name, const term_t *val) {
+static term_t *_subst(term_t *term, const char *name, const term_t *val) {
     switch (term->type) {
     case TM_VAR: {
         term_t *ret = NULL;
-        if (term->data.var == name) {
+        if (!strcmp(term->data.var, name)) {
             ret = _copy(val);
         } else {
             ret = _copy(term);
@@ -31,7 +30,8 @@ static term_t *_subst(term_t *term, sym_t name, const term_t *val) {
         return ret;
     }
     case TM_ABS: {
-        sym_t param = term->data.abs.param;
+        char param[TERM_SYMBOL_MAX_LENGTH];
+        strcpy(param, term->data.abs.param);
         term_t *body = _subst(term->data.abs.body, name, val);
         free(term);
         return term_abs(param, body);
@@ -94,15 +94,17 @@ static term_t *_eval_lim_depth(term_t *term, int depth) {
 
 term_t *term_eval(term_t *term) { return _eval_lim_depth(term, 0); }
 
-term_t *term_var(sym_t var) {
+term_t *term_var(const char *var) {
     term_t *term = _new_term(TM_VAR);
-    term->data.var = var;
+    assert(strlen(var) < TERM_SYMBOL_MAX_LENGTH);
+    strcpy(term->data.var, var);
     return term;
 }
 
-term_t *term_abs(sym_t param, term_t *body) {
+term_t *term_abs(const char *param, term_t *body) {
     term_t *term = _new_term(TM_ABS);
-    term->data.abs.param = param;
+    assert(strlen(param) < TERM_SYMBOL_MAX_LENGTH);
+    strcpy(term->data.abs.param, param);
     term->data.abs.body = body;
     return term;
 }
@@ -132,9 +134,9 @@ void term_destroy(term_t *term) {
 static size_t _repr_size(const term_t *term) {
     switch (term->type) {
     case TM_VAR:
-        return strlen(sym_name(term->data.var));
+        return strlen(term->data.var);
     case TM_ABS:
-        return 2 + strlen(sym_name(term->data.abs.param)) +
+        return 2 + strlen(term->data.abs.param) +
                _repr_size(term->data.abs.body);
     case TM_APP:
         return 3 + _repr_size(term->data.app.left) +
@@ -146,7 +148,7 @@ static void _repr(const term_t *term, char **p) {
     char *now = *p;
     switch (term->type) {
     case TM_VAR: {
-        const char *name = sym_name(term->data.var);
+        const char *name = term->data.var;
         while (*name != '\0') {
             *now = *name;
             name++;
@@ -173,7 +175,7 @@ static void _repr(const term_t *term, char **p) {
         *now = '\\';
         now++;
 
-        const char *name = sym_name(term->data.abs.param);
+        const char *name = term->data.abs.param;
         while (*name != '\0') {
             *now = *name;
             name++;

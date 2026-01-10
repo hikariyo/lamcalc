@@ -1,5 +1,4 @@
 #include "test.h"
-#include "symbol.h"
 #include <stdio.h>
 
 int test_passed_count;
@@ -18,8 +17,6 @@ int main() {
         printf(COLOR_RED "[  FAILED  ] %d test(s).\n" COLOR_RESET,
                test_failed_count);
     }
-
-    sym_destory();
 
     return 0;
 }

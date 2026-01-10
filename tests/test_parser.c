@@ -1,8 +1,8 @@
 #include "lexer.h"
 #include "parser.h"
-#include "symbol.h"
 #include "term.h"
 #include "test.h"
+#include <string.h>
 
 TEST(parser_eof_position) {
     token_t *tokens = lex_string("x");
@@ -11,7 +11,7 @@ TEST(parser_eof_position) {
     term_t *t = parse(&cursor, NULL);
 
     TEST_ASSERT(t->type == TM_VAR);
-    TEST_ASSERT(t->data.var == sym_intern("x"));
+    TEST_ASSERT(!strcmp(t->data.var, "x"));
 
     TEST_ASSERT(t != NULL);
     TEST_ASSERT(cursor == NULL);

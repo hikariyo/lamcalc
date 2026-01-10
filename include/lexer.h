@@ -1,7 +1,7 @@
 #ifndef LEXER_H
 #define LEXER_H
 
-#include "symbol.h"
+#include "term.h"
 
 typedef enum {
     TOKEN_NAME,   // Identifier (e.g., x, y, var_name)
@@ -13,8 +13,9 @@ typedef enum {
 
 typedef struct token {
     token_type_t type;
-    sym_t sym;          // Associated symbol (only valid for TOKEN_NAME)
-    struct token *next; // Pointer to the next token in the stream
+    char sym[TERM_SYMBOL_MAX_LENGTH]; // Associated symbol (only valid for
+                                      // TOKEN_NAME)
+    struct token *next;               // Pointer to the next token in the stream
 } token_t;
 
 // Lexes the input string and produces a linked-list of tokens.
