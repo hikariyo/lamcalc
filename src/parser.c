@@ -62,7 +62,7 @@ static term_t *parse_atom(token_t **tokens) {
     }
 }
 
-term_t *parse(token_t **tokens, token_t *end) {
+term_t *parse(token_t **tokens, const token_t *end) {
     if (*tokens == NULL) {
         printf("error: unexpected null\n");
         return NULL;

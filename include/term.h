@@ -34,27 +34,27 @@ struct term {
 };
 
 // Creates a variable term.
+// Returns an owned pointer.
 term_t *term_var(sym_t var);
 
-// Creates an abstraction term.
-// Takes ownership of body.
+// Creates an abstraction. Consumes 'body'.
+// Returns an owned pointer.
 term_t *term_abs(sym_t param, term_t *body);
 
-// Creates an application term.
-// Takes ownership of left and right.
+// Creates an application. Consumes 'left' and 'right'.
+// Returns an owned pointer.
 term_t *term_app(term_t *left, term_t *right);
 
-// Recursively frees the term and all its children.
+// Destroys the term and all its children. Consumes 'term'.
 void term_destroy(term_t *term);
 
 // Evaluates given term (Reduction).
-// Note: This function takes the ownership of term. Caller takes the ownership
-// of returned term.
-// Returns NULL if an error occurs.
+// Note: This function takes the ownership of term.
+// Returns an owned pointer, or NULL if an error occurs.
 term_t *term_eval(term_t *term);
 
 // Gets a string representation of the term.
-// Caller takes the ownership of returned string.
+// Returns an owned pointer.
 char *term_repr(const term_t *term);
 
 #endif // TERM_H

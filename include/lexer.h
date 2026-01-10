@@ -18,11 +18,10 @@ typedef struct token {
 } token_t;
 
 // Lexes the input string and produces a linked-list of tokens.
-// Returns the head of the token stream.
-// Note: The caller takes ownership of the returned memory.
+// Returns owned pointer as the head of the token stream.
 token_t *lex_string(const char *str);
 
-// Recursively destroys the token stream and frees all associated memory.
+// Destroys the token stream. Consumes 'tokens'.
 void lex_destroy_tokens(token_t *tokens);
 
 #endif // LEXER_H
