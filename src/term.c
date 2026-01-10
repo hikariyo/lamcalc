@@ -23,8 +23,33 @@ static term_t *_subst(term_t *term, sym_t name, const term_t *val) {
     switch (term->type) {
     case TM_VAR: {
         term_t *ret = NULL;
-        if (name == term->data.var) {
+        if (term->data.var == name) {
             ret = _copy(val);
+        } else if (term->data.var == sym_intern("+")) {
+            sym_t a = sym_intern("$+a");
+            sym_t b = sym_intern("$+b");
+            sym_t x = sym_intern("$+x");
+            sym_t f = sym_intern("$+f");
+
+            ret = term_abs(
+                a,
+                term_abs(
+                    b,
+                    term_abs(
+                        f,
+                        term_abs(x, term_app(term_app(term_var(b), term_var(f)),
+                                             term_app(term_app(term_var(a),
+                                                               term_var(f)),
+                                                      term_var(x)))))));
+        } else if (term->data.var == sym_intern("*")) {
+            sym_t a = sym_intern("$*a");
+            sym_t b = sym_intern("$*b");
+            sym_t f = sym_intern("$*f");
+
+            ret = term_abs(
+                a, term_abs(b, term_abs(f, term_app(term_var(a),
+                                                    term_app(term_var(b),
+                                                             term_var(f))))));
         } else {
             ret = _copy(term);
         }
@@ -63,9 +88,8 @@ static term_t *_eval_lim_depth(term_t *term, int depth) {
 
     switch (term->type) {
     case TM_VAR: {
-        term_t *ret = _copy(term);
-        term_destroy(term);
-        return ret;
+        // Builtin functions.
+        return _subst(term, -1, NULL);
     }
     case TM_ABS: {
         term_t *body = _eval_lim_depth(term->data.abs.body, depth + 1);

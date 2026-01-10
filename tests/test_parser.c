@@ -98,13 +98,22 @@ TEST(parser_deep_beta_reduction) {
     return PASSED;
 }
 
-TEST(parser_church_number) {
-    term_t *t = term_eval(
-        parse_string("(\\plus.((plus (\\f.\\x.(f x))) (\\f.\\x.(f (f x))))) "
-                     "(\\a.\\b.\\f.\\x.((b f)((a f) x)))"));
+TEST(parser_church_number_add) {
+    term_t *t =
+        term_eval(parse_string("+ (\\f.\\x.(f (f x))) (\\f.\\x.(f x))"));
     TEST_ASSERT(t != NULL);
     TEST_ASSERT(t->type == TM_ABS);
     TEST_ASSERT(term_as_church(t) == 3);
+    term_destroy(t);
+    return PASSED;
+}
+
+TEST(parser_church_number_mul) {
+    term_t *t = term_eval(
+        parse_string("* (\\f.\\x.(f (f (f x)))) (\\f.\\x.(f (f x)))"));
+    TEST_ASSERT(t != NULL);
+    TEST_ASSERT(t->type == TM_ABS);
+    TEST_ASSERT(term_as_church(t) == 6);
     term_destroy(t);
     return PASSED;
 }
