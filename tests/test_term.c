@@ -109,23 +109,44 @@ TEST(term_eval_dummy_var_free) {
     return PASSED;
 }
 
-TEST(term_repr) {
+TEST(term_church_number) {
+    sym_t f = sym_intern("f");
+    sym_t g = sym_intern("g");
+    sym_t h = sym_intern("h");
+
     sym_t x = sym_intern("x");
     sym_t y = sym_intern("y");
     sym_t z = sym_intern("z");
+
     sym_t a = sym_intern("a");
+    sym_t b = sym_intern("b");
 
-    term_t *id = term_abs(z, term_var(z));
-    term_t *func = term_abs(x, term_abs(y, term_app(term_var(x), term_var(y))));
+    term_t *two = term_abs(
+        f,
+        term_abs(x, term_app(term_var(f), term_app(term_var(f), term_var(x)))));
 
-    term_t *app1 = term_app(func, id);
-    term_t *app2 = term_app(app1, term_var(a));
+    term_t *three = term_abs(
+        g, term_abs(y, term_app(term_var(g),
+                                term_app(term_var(g),
+                                         term_app(term_var(g), term_var(y))))));
 
-    char *str = term_repr(app2);
-    TEST_ASSERT(!strcmp("((\\x.\\y.(x y) \\z.z) a)", str));
+    TEST_ASSERT(term_as_church(two) == 2);
+    TEST_ASSERT(term_as_church(three) == 3);
 
-    free(str);
+    term_t *plus = term_abs(
+        a,
+        term_abs(
+            b,
+            term_abs(h, term_abs(z, term_app(term_app(term_var(b), term_var(h)),
+                                             term_app(term_app(term_var(a),
+                                                               term_var(h)),
+                                                      term_var(z)))))));
 
-    term_destroy(app2);
+    term_t *app = term_app(term_app(plus, two), three);
+    term_t *result = term_eval(app);
+    TEST_ASSERT(term_as_church(result) == 5);
+
+    term_destroy(result);
+
     return PASSED;
 }

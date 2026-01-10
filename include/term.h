@@ -57,4 +57,8 @@ term_t *term_eval(term_t *term);
 // Returns an owned pointer.
 char *term_repr(const term_t *term);
 
+// Decodes the given term into an integer.
+// Returns -1 if given term is not in Church numeral format.
+int term_as_church(const term_t *term);
+
 #endif // TERM_H

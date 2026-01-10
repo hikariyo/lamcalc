@@ -1,6 +1,7 @@
 #include "term.h"
 #include "symbol.h"
 #include <assert.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -135,6 +136,19 @@ void term_destroy(term_t *term) {
 }
 
 static size_t _repr_size(const term_t *term) {
+    int church = term_as_church(term);
+    if (church != -1) {
+        if (church == 0) {
+            return 1;
+        }
+        int res = 0;
+        while (church) {
+            res++;
+            church /= 10;
+        }
+        return res;
+    }
+
     switch (term->type) {
     case TM_VAR:
         return strlen(sym_name(term->data.var));
@@ -148,6 +162,15 @@ static size_t _repr_size(const term_t *term) {
 }
 
 static void _repr(const term_t *term, char **p) {
+    int church = term_as_church(term);
+    if (church != -1) {
+        // The buffer size is calculated in advance.
+        int x = snprintf(*p, INT_MAX, "%d", church);
+        assert(x > 0);
+        (*p) += x;
+        return;
+    }
+
     char *now = *p;
     switch (term->type) {
     case TM_VAR: {
@@ -201,5 +224,42 @@ char *term_repr(const term_t *term) {
     assert(res != NULL);
     _repr(term, &p);
     *p = '\0';
+    return res;
+}
+
+int term_as_church(const term_t *term) {
+    if (term->type != TM_ABS) {
+        return -1;
+    }
+
+    sym_t f = term->data.abs.param;
+
+    term = term->data.abs.body;
+    if (term->type != TM_ABS) {
+        return -1;
+    }
+
+    sym_t x = term->data.abs.param;
+    if (f == x) {
+        return -1;
+    }
+
+    term = term->data.abs.body;
+
+    int res = 0;
+    while (term != NULL) {
+        if (term->type == TM_VAR && term->data.var == x) {
+            break;
+        }
+
+        if (term->type != TM_APP || term->data.app.left->type != TM_VAR ||
+            term->data.app.left->data.var != f) {
+            return -1;
+        }
+
+        res++;
+        term = term->data.app.right;
+    }
+
     return res;
 }
