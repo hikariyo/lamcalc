@@ -5,18 +5,19 @@ set_languages("c11")
 add_rules("mode.debug", "mode.release")
 
 if is_mode("debug") then
-    add_policy("build.sanitizer.address", true)
-    add_policy("build.sanitizer.undefined", true)
+    set_policy("build.sanitizer.address", true)
+    set_policy("build.sanitizer.undefined", true)
+    set_optimize("none")
+    set_warnings("all", "extra")
 end
 
 add_includedirs("include")
-add_cxflags("-Wall", "-Wextra", "-g")
 
 target("lamcalc")
     set_kind("binary")
     add_files("src/*.c")
 
-target("test")
+target("tests")
     set_kind("binary")
     add_files("src/*.c")
     remove_files("src/main.c")
