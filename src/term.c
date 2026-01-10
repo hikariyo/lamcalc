@@ -5,21 +5,29 @@
 static term_t *substitute(term_t *term, sym_t name, term_t *val) {
     switch (term->type) {
     case TM_VAR:
-        if (term->data.var == name)
+        if (term->data.var == name) {
+            free(term);
             return val;
-        else
+        } else {
             return term;
-    case TM_ABS:
-        return term_new_abs(term->data.abs.param,
-                            substitute(term->data.abs.body, name, val));
-    case TM_APP:
-        return term_new_app(substitute(term->data.app.left, name, val),
-                            substitute(term->data.app.right, name, val));
+        }
+    case TM_ABS: {
+        sym_t param = term->data.abs.param;
+        term_t *body = term->data.abs.body;
+        free(term);
+        return term_new_abs(param, substitute(body, name, val));
+    }
+    case TM_APP: {
+        term_t *left = term->data.app.left;
+        term_t *right = term->data.app.right;
+        free(term);
+        return term_new_app(substitute(left, name, val),
+                            substitute(right, name, val));
+    }
     }
 }
 
 static term_t *create_term(term_type_t type) {
-    // TODO: garbage collection
     term_t *term = (term_t *)malloc(sizeof(term_t));
     assert(term != NULL);
     term->type = type;
@@ -34,6 +42,7 @@ term_t *term_eval(term_t *term) {
     case TM_APP: {
         term_t *left = term_eval(term->data.app.left);
         term_t *right = term_eval(term->data.app.right);
+        free(term);
 
         if (left->type == TM_ABS) {
             term_t *body =
@@ -64,4 +73,19 @@ term_t *term_new_app(term_t *left, term_t *right) {
     term->data.app.left = left;
     term->data.app.right = right;
     return term;
+}
+
+void term_destroy(term_t *term) {
+    switch (term->type) {
+    case TM_VAR:
+        break;
+    case TM_ABS:
+        term_destroy(term->data.abs.body);
+        break;
+    case TM_APP:
+        term_destroy(term->data.app.left);
+        term_destroy(term->data.app.right);
+        break;
+    }
+    free(term);
 }

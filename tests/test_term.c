@@ -40,6 +40,8 @@ TEST(eval_nested_app) {
 
     TEST_ASSERT(result->type == TM_VAR);
     TEST_ASSERT(result->data.var == a);
+
+    term_destroy(result);
     return PASSED;
 }
 
@@ -55,12 +57,15 @@ TEST(eval_higher_order) {
     // \z. z
     term_t *id = term_new_abs(sym_intern("z"), term_new_var(sym_intern("z")));
 
+    term_t *app = term_new_app(term_new_app(apply, id), term_new_var(a));
+
     // (apply id) a
-    term_t *res =
-        term_eval(term_new_app(term_new_app(apply, id), term_new_var(a)));
+    term_t *res = term_eval(app);
 
     TEST_ASSERT(res->type == TM_VAR);
     TEST_ASSERT(res->data.var == a);
+
+    term_destroy(res);
     return PASSED;
 }
 
@@ -74,11 +79,15 @@ TEST(eval_free_var_preserved) {
     term_t *body = term_new_app(term_new_var(x), term_new_var(y));
     term_t *abs = term_new_abs(x, body);
 
+    term_t *app = term_new_app(abs, term_new_var(a));
+
     // (\x. x y) a
-    term_t *res = term_eval(term_new_app(abs, term_new_var(a)));
+    term_t *res = term_eval(app);
 
     TEST_ASSERT(res->type == TM_APP);
     TEST_ASSERT(res->data.app.left->data.var == a);
     TEST_ASSERT(res->data.app.right->data.var == y);
+
+    term_destroy(res);
     return PASSED;
 }
