@@ -4,11 +4,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-static int is_name_char(char ch) {
+static int _is_name(char ch) {
     return !(isspace(ch) || ch == '(' || ch == ')' || ch == '\\' || ch == '.');
 }
 
-static token_t *create_token(sym_t sym, token_type_t type, token_t *next) {
+static token_t *_create_token(sym_t sym, token_type_t type, token_t *next) {
     token_t *token = (token_t *)malloc(sizeof(token_t));
     assert(token != NULL);
     token->sym = sym;
@@ -34,16 +34,16 @@ token_t *lex_string(const char *str) {
 
         token_t *tail = tail_prev->next;
         if (now == '(') {
-            tail_prev->next = create_token(-1, TOKEN_LP, tail);
+            tail_prev->next = _create_token(-1, TOKEN_LP, tail);
         } else if (now == ')') {
-            tail_prev->next = create_token(-1, TOKEN_RP, tail);
+            tail_prev->next = _create_token(-1, TOKEN_RP, tail);
         } else if (now == '\\') {
-            tail_prev->next = create_token(-1, TOKEN_LAMBDA, tail);
+            tail_prev->next = _create_token(-1, TOKEN_LAMBDA, tail);
         } else if (now == '.') {
-            tail_prev->next = create_token(-1, TOKEN_DOT, tail);
+            tail_prev->next = _create_token(-1, TOKEN_DOT, tail);
         } else {
             size_t j = i;
-            while (j < len && is_name_char(str[j])) {
+            while (j < len && _is_name(str[j])) {
                 j++;
             }
 
@@ -52,7 +52,7 @@ token_t *lex_string(const char *str) {
             buf[j - i] = '\0';
             i = j - 1;
 
-            tail_prev->next = create_token(sym_intern(buf), TOKEN_NAME, tail);
+            tail_prev->next = _create_token(sym_intern(buf), TOKEN_NAME, tail);
         }
 
         tail_prev = tail_prev->next;

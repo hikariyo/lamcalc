@@ -5,24 +5,24 @@
 #include <stdlib.h>
 #include <string.h>
 
-static term_t *copyterm(const term_t *term) {
+static term_t *_copy(const term_t *term) {
     switch (term->type) {
     case TM_VAR:
         return term_var(term->data.var);
     case TM_ABS:
-        return term_abs(term->data.abs.param, copyterm(term->data.abs.body));
+        return term_abs(term->data.abs.param, _copy(term->data.abs.body));
     case TM_APP:
-        return term_app(copyterm(term->data.app.left),
-                        copyterm(term->data.app.right));
+        return term_app(_copy(term->data.app.left),
+                        _copy(term->data.app.right));
     }
 }
 
-static term_t *substitute(term_t *term, sym_t name, const term_t *val) {
+static term_t *_subst(term_t *term, sym_t name, const term_t *val) {
     switch (term->type) {
     case TM_VAR:
         if (term->data.var == name) {
             free(term);
-            return copyterm(val);
+            return _copy(val);
         } else {
             return term;
         }
@@ -30,26 +30,25 @@ static term_t *substitute(term_t *term, sym_t name, const term_t *val) {
         sym_t param = term->data.abs.param;
         term_t *body = term->data.abs.body;
         free(term);
-        return term_abs(param, substitute(body, name, val));
+        return term_abs(param, _subst(body, name, val));
     }
     case TM_APP: {
         term_t *left = term->data.app.left;
         term_t *right = term->data.app.right;
         free(term);
-        return term_app(substitute(left, name, val),
-                        substitute(right, name, val));
+        return term_app(_subst(left, name, val), _subst(right, name, val));
     }
     }
 }
 
-static term_t *create_term(term_type_t type) {
+static term_t *_new_term(term_type_t type) {
     term_t *term = (term_t *)malloc(sizeof(term_t));
     assert(term != NULL);
     term->type = type;
     return term;
 }
 
-static term_t *eval_limited_recur_depth(term_t *term, int depth) {
+static term_t *_eval_lim_depth(term_t *term, int depth) {
     if (depth > TERM_EVAL_MAX_DEPTH) {
         printf("error: max recursion depth exceeded(possible infinite "
                "recursion).\n");
@@ -61,12 +60,11 @@ static term_t *eval_limited_recur_depth(term_t *term, int depth) {
     case TM_ABS:
         return term;
     case TM_APP: {
-        term_t *left = eval_limited_recur_depth(term->data.app.left, depth + 1);
+        term_t *left = _eval_lim_depth(term->data.app.left, depth + 1);
         if (left == NULL) {
             return NULL;
         }
-        term_t *right =
-            eval_limited_recur_depth(term->data.app.right, depth + 1);
+        term_t *right = _eval_lim_depth(term->data.app.right, depth + 1);
 
         if (right == NULL) {
             return NULL;
@@ -75,10 +73,10 @@ static term_t *eval_limited_recur_depth(term_t *term, int depth) {
         free(term);
         if (left->type == TM_ABS) {
             term_t *body =
-                substitute(left->data.abs.body, left->data.abs.param, right);
+                _subst(left->data.abs.body, left->data.abs.param, right);
             free(left);
             free(right);
-            return eval_limited_recur_depth(body, depth + 1);
+            return _eval_lim_depth(body, depth + 1);
         }
 
         return term_app(left, right);
@@ -86,23 +84,23 @@ static term_t *eval_limited_recur_depth(term_t *term, int depth) {
     }
 }
 
-term_t *term_eval(term_t *term) { return eval_limited_recur_depth(term, 0); }
+term_t *term_eval(term_t *term) { return _eval_lim_depth(term, 0); }
 
 term_t *term_var(sym_t var) {
-    term_t *term = create_term(TM_VAR);
+    term_t *term = _new_term(TM_VAR);
     term->data.var = var;
     return term;
 }
 
 term_t *term_abs(sym_t param, term_t *body) {
-    term_t *term = create_term(TM_ABS);
+    term_t *term = _new_term(TM_ABS);
     term->data.abs.param = param;
     term->data.abs.body = body;
     return term;
 }
 
 term_t *term_app(term_t *left, term_t *right) {
-    term_t *term = create_term(TM_APP);
+    term_t *term = _new_term(TM_APP);
     term->data.app.left = left;
     term->data.app.right = right;
     return term;
@@ -123,20 +121,20 @@ void term_destroy(term_t *term) {
     free(term);
 }
 
-static size_t repr_size(const term_t *term) {
+static size_t _repr_size(const term_t *term) {
     switch (term->type) {
     case TM_VAR:
         return strlen(sym_name(term->data.var));
     case TM_ABS:
         return 2 + strlen(sym_name(term->data.abs.param)) +
-               repr_size(term->data.abs.body);
+               _repr_size(term->data.abs.body);
     case TM_APP:
-        return 3 + repr_size(term->data.app.left) +
-               repr_size(term->data.app.right);
+        return 3 + _repr_size(term->data.app.left) +
+               _repr_size(term->data.app.right);
     }
 }
 
-static void repr(const term_t *term, char **p) {
+static void _repr(const term_t *term, char **p) {
     char *now = *p;
     switch (term->type) {
     case TM_VAR: {
@@ -152,12 +150,12 @@ static void repr(const term_t *term, char **p) {
         *now = '(';
         now++;
 
-        repr(term->data.app.left, &now);
+        _repr(term->data.app.left, &now);
 
         *now = ' ';
         now++;
 
-        repr(term->data.app.right, &now);
+        _repr(term->data.app.right, &now);
 
         *now = ')';
         now++;
@@ -177,18 +175,18 @@ static void repr(const term_t *term, char **p) {
         *now = '.';
         now++;
 
-        repr(term->data.abs.body, &now);
+        _repr(term->data.abs.body, &now);
     }
     }
     *p = now;
 }
 
 char *term_repr(const term_t *term) {
-    size_t sz = repr_size(term) + 1;
+    size_t sz = _repr_size(term) + 1;
     char *res = malloc(sizeof(char) * sz);
     char *p = res;
     assert(res != NULL);
-    repr(term, &p);
+    _repr(term, &p);
     *p = '\0';
     return res;
 }

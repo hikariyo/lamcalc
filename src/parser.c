@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static term_t *parse_abs(token_t **tokens, token_t *end) {
+static term_t *_parse_abs(token_t **tokens, token_t *end) {
     token_t *t = *tokens;
     assert(t->type == TOKEN_LAMBDA);
 
@@ -23,7 +23,7 @@ static term_t *parse_abs(token_t **tokens, token_t *end) {
     return term_abs(param, body);
 }
 
-static token_t *find_rp(token_t *t) {
+static token_t *_find_rp(token_t *t) {
     int now = 0;
     for (token_t *p = t; p != NULL; p = p->next) {
         if (p->type == TOKEN_LP) {
@@ -38,7 +38,7 @@ static token_t *find_rp(token_t *t) {
     return NULL;
 }
 
-static term_t *parse_atom(token_t **tokens) {
+static term_t *_parse_atom(token_t **tokens) {
     token_t *t = *tokens;
     switch (t->type) {
     case TOKEN_NAME:
@@ -46,7 +46,7 @@ static term_t *parse_atom(token_t **tokens) {
         return term_var(t->sym);
     case TOKEN_LP: {
         t = t->next;
-        token_t *rp = find_rp(*tokens);
+        token_t *rp = _find_rp(*tokens);
         if (rp == NULL) {
             printf("error: no matched right parenthesis\n");
             return NULL;
@@ -70,12 +70,12 @@ term_t *parse(token_t **tokens, token_t *end) {
 
     switch ((*tokens)->type) {
     case TOKEN_LAMBDA:
-        return parse_abs(tokens, end);
+        return _parse_abs(tokens, end);
     case TOKEN_NAME:
     case TOKEN_LP: {
         term_t *now = NULL;
         while (*tokens != end) {
-            term_t *atom = parse_atom(tokens);
+            term_t *atom = _parse_atom(tokens);
 
             // A NULL returned from parse_atom signals a syntax error.
             if (atom == NULL) {
