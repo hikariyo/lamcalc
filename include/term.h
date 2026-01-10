@@ -4,6 +4,8 @@
 #include "symbol.h"
 #include <stddef.h>
 
+#define TERM_EVAL_MAX_DEPTH 1024
+
 typedef enum {
     TM_VAR,
     TM_ABS,
@@ -46,8 +48,9 @@ term_t *term_app(term_t *left, term_t *right);
 void term_destroy(term_t *term);
 
 // Evaluates given term (Reduction).
-// Note: This function consumes the input 'term'. Use the returned pointer only.
-// The input 'term' may be modified in-place or freed.
+// Note: This function takes the ownership of term. Caller takes the ownership
+// of returned term.
+// Returns NULL if an error occurs.
 term_t *term_eval(term_t *term);
 
 // Gets a string representation of the term.

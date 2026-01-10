@@ -27,10 +27,12 @@ int main() {
             term_t *term = parse(&cursor, NULL);
             if (term != NULL) {
                 term = term_eval(term);
-                char *repr = term_repr(term);
-                printf("%s\n", repr);
-                free(repr);
-                term_destroy(term);
+                if (term != NULL) {
+                    char *repr = term_repr(term);
+                    printf("%s\n", repr);
+                    free(repr);
+                    term_destroy(term);
+                }
             }
 
             lex_destroy_tokens(tokens);

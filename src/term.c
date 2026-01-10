@@ -5,14 +5,24 @@
 #include <stdlib.h>
 #include <string.h>
 
-static term_t *substitute(term_t *term, sym_t name, term_t *val,
-                          int *referred_val) {
+static term_t *copyterm(const term_t *term) {
+    switch (term->type) {
+    case TM_VAR:
+        return term_var(term->data.var);
+    case TM_ABS:
+        return term_abs(term->data.abs.param, copyterm(term->data.abs.body));
+    case TM_APP:
+        return term_app(copyterm(term->data.app.left),
+                        copyterm(term->data.app.right));
+    }
+}
+
+static term_t *substitute(term_t *term, sym_t name, const term_t *val) {
     switch (term->type) {
     case TM_VAR:
         if (term->data.var == name) {
             free(term);
-            *referred_val = 1;
-            return val;
+            return copyterm(val);
         } else {
             return term;
         }
@@ -20,14 +30,14 @@ static term_t *substitute(term_t *term, sym_t name, term_t *val,
         sym_t param = term->data.abs.param;
         term_t *body = term->data.abs.body;
         free(term);
-        return term_abs(param, substitute(body, name, val, referred_val));
+        return term_abs(param, substitute(body, name, val));
     }
     case TM_APP: {
         term_t *left = term->data.app.left;
         term_t *right = term->data.app.right;
         free(term);
-        return term_app(substitute(left, name, val, referred_val),
-                        substitute(right, name, val, referred_val));
+        return term_app(substitute(left, name, val),
+                        substitute(right, name, val));
     }
     }
 }
@@ -39,31 +49,44 @@ static term_t *create_term(term_type_t type) {
     return term;
 }
 
-term_t *term_eval(term_t *term) {
+static term_t *eval_limited_recur_depth(term_t *term, int depth) {
+    if (depth > TERM_EVAL_MAX_DEPTH) {
+        printf("error: max recursion depth exceeded(possible infinite "
+               "recursion).\n");
+        return NULL;
+    }
+
     switch (term->type) {
     case TM_VAR:
     case TM_ABS:
         return term;
     case TM_APP: {
-        term_t *left = term_eval(term->data.app.left);
-        term_t *right = term_eval(term->data.app.right);
-        free(term);
+        term_t *left = eval_limited_recur_depth(term->data.app.left, depth + 1);
+        if (left == NULL) {
+            return NULL;
+        }
+        term_t *right =
+            eval_limited_recur_depth(term->data.app.right, depth + 1);
 
+        if (right == NULL) {
+            return NULL;
+        }
+
+        free(term);
         if (left->type == TM_ABS) {
-            int refereed_right = 0;
-            term_t *body = substitute(left->data.abs.body, left->data.abs.param,
-                                      right, &refereed_right);
+            term_t *body =
+                substitute(left->data.abs.body, left->data.abs.param, right);
             free(left);
-            if (!refereed_right) {
-                free(right);
-            }
-            return term_eval(body);
+            free(right);
+            return eval_limited_recur_depth(body, depth + 1);
         }
 
         return term_app(left, right);
     }
     }
 }
+
+term_t *term_eval(term_t *term) { return eval_limited_recur_depth(term, 0); }
 
 term_t *term_var(sym_t var) {
     term_t *term = create_term(TM_VAR);
