@@ -61,11 +61,16 @@ static term_t *_eval_lim_depth(term_t *term, int depth) {
     }
 
     switch (term->type) {
-    case TM_VAR:
-    case TM_ABS: {
+    case TM_VAR: {
         term_t *ret = _copy(term);
         term_destroy(term);
         return ret;
+    }
+    case TM_ABS: {
+        term_t *body = _eval_lim_depth(term->data.abs.body, depth + 1);
+        sym_t param = term->data.abs.param;
+        free(term);
+        return term_abs(param, body);
     }
     case TM_APP: {
         term_t *left = _eval_lim_depth(term->data.app.left, depth + 1);

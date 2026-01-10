@@ -87,3 +87,13 @@ TEST(parser_shadowing) {
     term_destroy(t);
     return PASSED;
 }
+
+TEST(parser_deep_beta_reduction) {
+    term_t *t = term_eval(parse_string("(\\f.\\x.(f x)) (\\y.y)"));
+    TEST_ASSERT(t != NULL);
+    TEST_ASSERT(t->type == TM_ABS);
+    TEST_ASSERT(t->data.abs.body->type == TM_VAR);
+    TEST_ASSERT(t->data.abs.param == t->data.abs.body->data.var);
+    term_destroy(t);
+    return PASSED;
+}
