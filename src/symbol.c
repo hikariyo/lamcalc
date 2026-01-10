@@ -6,25 +6,30 @@
 
 #define SYM_DEFAULT_CAPACITY 32
 
-static char **sym_table;
+typedef struct sym_table {
+    char name[SYM_MAXLEN + 1]; // +1 for '\0'
+} sym_table_t;
+
+static sym_table_t *sym_table;
 static size_t sym_count;
 static size_t sym_capacity;
 
 sym_t sym_intern(const char *name) {
+    assert(strlen(name) <= SYM_MAXLEN);
+
     for (size_t i = 0; i < sym_count; i++) {
-        if (!strcmp(sym_table[i], name)) {
+        if (!strcmp(sym_table[i].name, name)) {
             return i;
         }
     }
 
     if (sym_count + 1 > sym_capacity) {
         sym_capacity *= 2;
-        sym_table = realloc(sym_table, sym_capacity * sizeof(const char *));
+        sym_table = realloc(sym_table, sym_capacity * sizeof(sym_table_t));
         assert(sym_table != NULL);
     }
 
-    sym_table[sym_count] = strdup(name);
-    assert(sym_table[sym_count] != NULL);
+    strcpy(sym_table[sym_count].name, name);
     sym_count++;
     return sym_count - 1;
 }
@@ -33,16 +38,13 @@ const char *sym_name(sym_t sym) {
     if (sym < 0 || sym > sym_count) {
         return SYM_INVALID;
     }
-    return sym_table[sym];
+    return sym_table[sym].name;
 }
 
 void sym_init() {
-    for (size_t i = 0; i < sym_count; i++) {
-        free(sym_table[i]);
-    }
     free(sym_table);
     sym_count = 0;
     sym_capacity = SYM_DEFAULT_CAPACITY;
-    sym_table = malloc(sym_capacity * sizeof(const char *));
+    sym_table = malloc(sym_capacity * sizeof(sym_table_t));
     assert(sym_table != NULL);
 }

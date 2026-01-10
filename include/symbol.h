@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #define SYM_INVALID "<INVALID>"
+#define SYM_MAXLEN 63
 
 typedef uint32_t sym_t;
 
