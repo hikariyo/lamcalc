@@ -17,14 +17,14 @@ static term_t *substitute(term_t *term, sym_t name, term_t *val,
         sym_t param = term->data.abs.param;
         term_t *body = term->data.abs.body;
         free(term);
-        return term_new_abs(param, substitute(body, name, val, referred_val));
+        return term_abs(param, substitute(body, name, val, referred_val));
     }
     case TM_APP: {
         term_t *left = term->data.app.left;
         term_t *right = term->data.app.right;
         free(term);
-        return term_new_app(substitute(left, name, val, referred_val),
-                            substitute(right, name, val, referred_val));
+        return term_app(substitute(left, name, val, referred_val),
+                        substitute(right, name, val, referred_val));
     }
     }
 }
@@ -57,25 +57,25 @@ term_t *term_eval(term_t *term) {
             return term_eval(body);
         }
 
-        return term_new_app(left, right);
+        return term_app(left, right);
     }
     }
 }
 
-term_t *term_new_var(sym_t var) {
+term_t *term_var(sym_t var) {
     term_t *term = create_term(TM_VAR);
     term->data.var = var;
     return term;
 }
 
-term_t *term_new_abs(sym_t param, term_t *body) {
+term_t *term_abs(sym_t param, term_t *body) {
     term_t *term = create_term(TM_ABS);
     term->data.abs.param = param;
     term->data.abs.body = body;
     return term;
 }
 
-term_t *term_new_app(term_t *left, term_t *right) {
+term_t *term_app(term_t *left, term_t *right) {
     term_t *term = create_term(TM_APP);
     term->data.app.left = left;
     term->data.app.right = right;

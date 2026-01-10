@@ -30,11 +30,11 @@ struct term {
     } data;
 };
 
-term_t *term_new_var(sym_t var);
+term_t *term_var(sym_t var);
 
-term_t *term_new_abs(sym_t param, term_t *body);
+term_t *term_abs(sym_t param, term_t *body);
 
-term_t *term_new_app(term_t *left, term_t *right);
+term_t *term_app(term_t *left, term_t *right);
 
 void term_destroy(term_t *term);
 

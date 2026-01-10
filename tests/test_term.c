@@ -6,9 +6,9 @@ TEST(eval_identity) {
     sym_t x = sym_intern("x");
     sym_t a = sym_intern("a");
 
-    term_t *id = term_new_abs(x, term_new_var(x));
-    term_t *val = term_new_var(a);
-    term_t *app = term_new_app(id, val);
+    term_t *id = term_abs(x, term_var(x));
+    term_t *val = term_var(a);
+    term_t *app = term_app(id, val);
 
     term_t *result = term_eval(app);
 
@@ -28,14 +28,13 @@ TEST(eval_nested_app) {
     sym_t a = sym_intern("a");
 
     // \z. z
-    term_t *id = term_new_abs(z, term_new_var(z));
+    term_t *id = term_abs(z, term_var(z));
     // \x. \y. x y
-    term_t *func = term_new_abs(
-        x, term_new_abs(y, term_new_app(term_new_var(x), term_new_var(y))));
+    term_t *func = term_abs(x, term_abs(y, term_app(term_var(x), term_var(y))));
 
     // ((\x. \y. x y) (\z. z)) a
-    term_t *app1 = term_new_app(func, id);
-    term_t *app2 = term_new_app(app1, term_new_var(a));
+    term_t *app1 = term_app(func, id);
+    term_t *app2 = term_app(app1, term_var(a));
 
     term_t *result = term_eval(app2);
 
@@ -52,12 +51,12 @@ TEST(eval_higher_order) {
     sym_t a = sym_intern("a");
 
     // \f. \x. f x
-    term_t *apply = term_new_abs(
-        f, term_new_abs(x, term_new_app(term_new_var(f), term_new_var(x))));
+    term_t *apply =
+        term_abs(f, term_abs(x, term_app(term_var(f), term_var(x))));
     // \z. z
-    term_t *id = term_new_abs(sym_intern("z"), term_new_var(sym_intern("z")));
+    term_t *id = term_abs(sym_intern("z"), term_var(sym_intern("z")));
 
-    term_t *app = term_new_app(term_new_app(apply, id), term_new_var(a));
+    term_t *app = term_app(term_app(apply, id), term_var(a));
 
     // (apply id) a
     term_t *res = term_eval(app);
@@ -75,10 +74,10 @@ TEST(eval_free_var_preserved) {
     sym_t a = sym_intern("a");
 
     // \x. x y
-    term_t *body = term_new_app(term_new_var(x), term_new_var(y));
-    term_t *abs = term_new_abs(x, body);
+    term_t *body = term_app(term_var(x), term_var(y));
+    term_t *abs = term_abs(x, body);
 
-    term_t *app = term_new_app(abs, term_new_var(a));
+    term_t *app = term_app(abs, term_var(a));
 
     // (\x. x y) a
     term_t *res = term_eval(app);
@@ -97,9 +96,9 @@ TEST(eval_dummy_var_free) {
     sym_t y = sym_intern("y");
     sym_t a = sym_intern("a");
 
-    term_t *abs = term_new_abs(x, term_new_abs(y, term_new_var(y)));
-    term_t *app1 = term_new_app(abs, term_new_var(a));
-    term_t *app2 = term_new_app(app1, term_new_var(a));
+    term_t *abs = term_abs(x, term_abs(y, term_var(y)));
+    term_t *app1 = term_app(abs, term_var(a));
+    term_t *app2 = term_app(app1, term_var(a));
     term_t *result = term_eval(app2);
 
     TEST_ASSERT(result->type == TM_VAR);
