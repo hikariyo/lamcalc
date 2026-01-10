@@ -17,26 +17,30 @@ static term_t *_copy(const term_t *term) {
     }
 }
 
+// Consumes 'term'.
 static term_t *_subst(term_t *term, sym_t name, const term_t *val) {
     switch (term->type) {
-    case TM_VAR:
+    case TM_VAR: {
+        term_t *ret = NULL;
         if (term->data.var == name) {
-            free(term);
-            return _copy(val);
+            ret = _copy(val);
         } else {
-            return term;
+            ret = _copy(term);
         }
+        term_destroy(term);
+        return ret;
+    }
     case TM_ABS: {
         sym_t param = term->data.abs.param;
-        term_t *body = term->data.abs.body;
+        term_t *body = _subst(term->data.abs.body, name, val);
         free(term);
-        return term_abs(param, _subst(body, name, val));
+        return term_abs(param, body);
     }
     case TM_APP: {
-        term_t *left = term->data.app.left;
-        term_t *right = term->data.app.right;
+        term_t *left = _subst(term->data.app.left, name, val);
+        term_t *right = _subst(term->data.app.right, name, val);
         free(term);
-        return term_app(_subst(left, name, val), _subst(right, name, val));
+        return term_app(left, right);
     }
     }
 }
@@ -48,6 +52,7 @@ static term_t *_new_term(term_type_t type) {
     return term;
 }
 
+// Consumes 'term'.
 static term_t *_eval_lim_depth(term_t *term, int depth) {
     if (depth > TERM_EVAL_MAX_DEPTH) {
         printf("error: max recursion depth exceeded(possible infinite "
@@ -57,15 +62,18 @@ static term_t *_eval_lim_depth(term_t *term, int depth) {
 
     switch (term->type) {
     case TM_VAR:
-    case TM_ABS:
-        return term;
+    case TM_ABS: {
+        term_t *ret = _copy(term);
+        term_destroy(term);
+        return ret;
+    }
     case TM_APP: {
         term_t *left = _eval_lim_depth(term->data.app.left, depth + 1);
         if (left == NULL) {
             return NULL;
         }
-        term_t *right = _eval_lim_depth(term->data.app.right, depth + 1);
 
+        term_t *right = _eval_lim_depth(term->data.app.right, depth + 1);
         if (right == NULL) {
             return NULL;
         }
@@ -75,7 +83,7 @@ static term_t *_eval_lim_depth(term_t *term, int depth) {
             term_t *body =
                 _subst(left->data.abs.body, left->data.abs.param, right);
             free(left);
-            free(right);
+            term_destroy(right);
             return _eval_lim_depth(body, depth + 1);
         }
 
