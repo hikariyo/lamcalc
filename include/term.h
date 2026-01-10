@@ -1,10 +1,10 @@
 #ifndef TERM_H
 #define TERM_H
 
+#include "symbol.h"
 #include <stddef.h>
 
 #define TERM_EVAL_MAX_DEPTH 1024
-#define TERM_SYMBOL_MAX_LENGTH 16
 
 typedef enum {
     TM_VAR,
@@ -15,7 +15,7 @@ typedef enum {
 typedef struct term term_t;
 
 typedef struct {
-    char param[TERM_SYMBOL_MAX_LENGTH];
+    sym_t param;
     term_t *body; // Owned
 } term_abs_t;
 
@@ -27,7 +27,7 @@ typedef struct {
 struct term {
     term_type_t type;
     union {
-        char var[TERM_SYMBOL_MAX_LENGTH];
+        sym_t var;
         term_abs_t abs;
         term_app_t app;
     } data;
@@ -35,11 +35,11 @@ struct term {
 
 // Creates a variable term.
 // Returns an owned pointer.
-term_t *term_var(const char *var);
+term_t *term_var(sym_t var);
 
 // Creates an abstraction. Consumes 'body'.
 // Returns an owned pointer.
-term_t *term_abs(const char *param, term_t *body);
+term_t *term_abs(sym_t param, term_t *body);
 
 // Creates an application. Consumes 'left' and 'right'.
 // Returns an owned pointer.

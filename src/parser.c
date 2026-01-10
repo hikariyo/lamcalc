@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "lexer.h"
+#include "symbol.h"
 #include "term.h"
 #include <assert.h>
 #include <stdio.h>
@@ -11,7 +12,7 @@ static term_t *_parse_abs(token_t **tokens, token_t *end) {
 
     t = t->next;
     assert(t->type == TOKEN_NAME);
-    const char *param = t->sym;
+    sym_t param = t->sym;
 
     t = t->next;
     assert(t->type == TOKEN_DOT);
