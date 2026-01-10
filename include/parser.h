@@ -15,4 +15,8 @@ struct token;
 // tokens.
 struct term *parse(struct token **tokens, struct token *end);
 
+// Parses given string.
+// Returns owned pointer, or NULL on syntax error.
+struct term *parse_string(const char *str);
+
 #endif // PARSER_H

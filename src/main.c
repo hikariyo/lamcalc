@@ -21,21 +21,20 @@ int main() {
 
         if (*input != '\0') {
             add_history(input);
-            token_t *tokens = lex_string(input);
-            token_t *cursor = tokens;
 
-            term_t *term = parse(&cursor, NULL);
-            if (term != NULL) {
-                term = term_eval(term);
-                if (term != NULL) {
-                    char *repr = term_repr(term);
-                    printf("%s\n", repr);
-                    free(repr);
-                    term_destroy(term);
-                }
+            term_t *term = parse_string(input);
+
+            if (term == NULL) {
+                continue;
             }
 
-            lex_destroy_tokens(tokens);
+            term = term_eval(term);
+            if (term != NULL) {
+                char *repr = term_repr(term);
+                printf("%s\n", repr);
+                free(repr);
+                term_destroy(term);
+            }
         }
         free(input);
     }

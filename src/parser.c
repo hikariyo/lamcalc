@@ -93,3 +93,10 @@ term_t *parse(token_t **tokens, token_t *end) {
         return NULL;
     }
 }
+
+term_t *parse_string(const char *str) {
+    token_t *tokens = lex_string(str);
+    term_t *term = parse(&tokens, NULL);
+    lex_destroy_tokens(tokens);
+    return term;
+}
