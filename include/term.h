@@ -1,5 +1,5 @@
-#ifndef VARSTR_H
-#define VARSTR_H
+#ifndef TERM_H
+#define TERM_H
 
 #include "symbol.h"
 
@@ -40,4 +40,4 @@ void term_destroy(term_t *term);
 
 term_t *term_eval(term_t *term);
 
-#endif // VARSTR_H
+#endif // TERM_H
