@@ -25,14 +25,14 @@ static term_t *parse_abs(token_t **tokens, token_t *end) {
 
 static token_t *find_rp(token_t *t) {
     int now = 0;
-    for (; t->type != TOKEN_EOF; t = t->next) {
-        if (t->type == TOKEN_LP) {
+    for (token_t *p = t; p != NULL; p = p->next) {
+        if (p->type == TOKEN_LP) {
             now++;
-        } else if (t->type == TOKEN_RP) {
+        } else if (p->type == TOKEN_RP) {
             now--;
         }
         if (now == 0) {
-            return t;
+            return p;
         }
     }
     return NULL;
@@ -63,21 +63,18 @@ static term_t *parse_atom(token_t **tokens) {
 }
 
 term_t *parse(token_t **tokens, token_t *end) {
+    if (*tokens == NULL) {
+        printf("error: unexpected null\n");
+        return NULL;
+    }
+
     switch ((*tokens)->type) {
     case TOKEN_LAMBDA:
         return parse_abs(tokens, end);
     case TOKEN_NAME:
     case TOKEN_LP: {
         term_t *now = NULL;
-        for (;;) {
-            if (end == NULL && (*tokens)->type == TOKEN_EOF) {
-                break;
-            }
-
-            if (end != NULL && *tokens == end) {
-                break;
-            }
-
+        while (*tokens != end) {
             term_t *atom = parse_atom(tokens);
 
             // A NULL returned from parse_atom signals a syntax error.

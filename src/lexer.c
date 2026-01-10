@@ -22,7 +22,7 @@ token_t *lex_string(const char *str) {
 
     token_t dummy_head;
     token_t *tail_prev = &dummy_head;
-    tail_prev->next = create_token(-1, TOKEN_EOF, NULL);
+    tail_prev->next = NULL;
 
     char buf[SYM_MAXLEN + 1];
 

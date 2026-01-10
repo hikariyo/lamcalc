@@ -9,7 +9,6 @@ typedef enum {
     TOKEN_DOT,    // Function body separator '.'
     TOKEN_LP,     // Left parenthesis '('
     TOKEN_RP,     // Right parenthesis ')'
-    TOKEN_EOF,    // End of input/file marker
 } token_type_t;
 
 typedef struct token {

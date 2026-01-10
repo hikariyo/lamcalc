@@ -28,7 +28,7 @@ TEST(lexer_basic) {
     ASSERT_TOKEN(t, TOKEN_RP);
 
     t = t->next;
-    ASSERT_TOKEN(t, TOKEN_EOF);
+    TEST_ASSERT(t == NULL);
 
     lex_destroy_tokens(tokens);
     return PASSED;
@@ -54,7 +54,7 @@ TEST(lexer_lambda_expr) {
     ASSERT_TOKEN_NAME(t, "y");
 
     t = t->next;
-    ASSERT_TOKEN(t, TOKEN_EOF);
+    TEST_ASSERT(t == NULL);
 
     lex_destroy_tokens(tokens);
     return PASSED;
@@ -77,7 +77,7 @@ TEST(lexer_spacing) {
     ASSERT_TOKEN_NAME(t, "x");
 
     t = t->next;
-    ASSERT_TOKEN(t, TOKEN_EOF);
+    TEST_ASSERT(t == NULL);
 
     lex_destroy_tokens(tokens);
     return PASSED;

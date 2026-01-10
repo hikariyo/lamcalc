@@ -14,8 +14,7 @@ TEST(parser_eof_position) {
     TEST_ASSERT(t->data.var == sym_intern("x"));
 
     TEST_ASSERT(t != NULL);
-    TEST_ASSERT(cursor != NULL);
-    TEST_ASSERT(cursor->type == TOKEN_EOF);
+    TEST_ASSERT(cursor == NULL);
 
     term_destroy(t);
     lex_destroy_tokens(tokens);
@@ -30,7 +29,7 @@ TEST(parser_multiple_app) {
 
     TEST_ASSERT(t != NULL);
     TEST_ASSERT(t->type == TM_APP);
-    TEST_ASSERT(cursor->type == TOKEN_EOF);
+    TEST_ASSERT(cursor == NULL);
 
     term_destroy(t);
     lex_destroy_tokens(tokens);
@@ -45,7 +44,7 @@ TEST(parser_multiple_app_parenthesis) {
 
     TEST_ASSERT(t != NULL);
     TEST_ASSERT(t->type == TM_APP);
-    TEST_ASSERT(cursor->type == TOKEN_EOF);
+    TEST_ASSERT(cursor == NULL);
 
     term_destroy(t);
     lex_destroy_tokens(tokens);
