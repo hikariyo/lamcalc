@@ -2,11 +2,13 @@
 #include <assert.h>
 #include <stdlib.h>
 
-static term_t *substitute(term_t *term, sym_t name, term_t *val) {
+static term_t *substitute(term_t *term, sym_t name, term_t *val,
+                          int *referred_val) {
     switch (term->type) {
     case TM_VAR:
         if (term->data.var == name) {
             free(term);
+            *referred_val = 1;
             return val;
         } else {
             return term;
@@ -15,14 +17,14 @@ static term_t *substitute(term_t *term, sym_t name, term_t *val) {
         sym_t param = term->data.abs.param;
         term_t *body = term->data.abs.body;
         free(term);
-        return term_new_abs(param, substitute(body, name, val));
+        return term_new_abs(param, substitute(body, name, val, referred_val));
     }
     case TM_APP: {
         term_t *left = term->data.app.left;
         term_t *right = term->data.app.right;
         free(term);
-        return term_new_app(substitute(left, name, val),
-                            substitute(right, name, val));
+        return term_new_app(substitute(left, name, val, referred_val),
+                            substitute(right, name, val, referred_val));
     }
     }
 }
@@ -45,8 +47,13 @@ term_t *term_eval(term_t *term) {
         free(term);
 
         if (left->type == TM_ABS) {
-            term_t *body =
-                substitute(left->data.abs.body, left->data.abs.param, right);
+            int refereed_right = 0;
+            term_t *body = substitute(left->data.abs.body, left->data.abs.param,
+                                      right, &refereed_right);
+            free(left);
+            if (!refereed_right) {
+                free(right);
+            }
             return term_eval(body);
         }
 

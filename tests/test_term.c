@@ -1,3 +1,4 @@
+#include "symbol.h"
 #include "term.h"
 #include "test.h"
 
@@ -14,6 +15,8 @@ TEST(eval_identity) {
     TEST_ASSERT(result != NULL);
     TEST_ASSERT(result->type == TM_VAR);
     TEST_ASSERT(result->data.var == a);
+
+    term_destroy(result);
 
     return PASSED;
 }
@@ -85,5 +88,23 @@ TEST(eval_free_var_preserved) {
     TEST_ASSERT(res->data.app.right->data.var == y);
 
     term_destroy(res);
+    return PASSED;
+}
+
+TEST(eval_dummy_var_free) {
+    // \x.\y.y
+    sym_t x = sym_intern("x");
+    sym_t y = sym_intern("y");
+    sym_t a = sym_intern("a");
+
+    term_t *abs = term_new_abs(x, term_new_abs(y, term_new_var(y)));
+    term_t *app1 = term_new_app(abs, term_new_var(a));
+    term_t *app2 = term_new_app(app1, term_new_var(a));
+    term_t *result = term_eval(app2);
+
+    TEST_ASSERT(result->type == TM_VAR);
+    TEST_ASSERT(result->data.var == a);
+
+    term_destroy(result);
     return PASSED;
 }
