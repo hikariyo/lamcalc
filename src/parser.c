@@ -97,7 +97,8 @@ term_t *parse(token_t **tokens, token_t *end) {
 
 term_t *parse_string(const char *str) {
     token_t *tokens = lex_string(str);
-    term_t *term = parse(&tokens, NULL);
+    token_t *cursor = tokens;
+    term_t *term = parse(&cursor, NULL);
     lex_destroy_tokens(tokens);
     return term;
 }
