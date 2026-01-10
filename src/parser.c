@@ -3,6 +3,7 @@
 #include "symbol.h"
 #include "term.h"
 #include <assert.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -94,12 +95,28 @@ static token_t *_find_rp(token_t *t) {
     return NULL;
 }
 
+static int _convert_to_int(const char *s) {
+    int res = 0;
+    for (; *s; s++) {
+        if (!isdigit(*s)) {
+            return -1;
+        }
+        res = res * 10 + *s - '0';
+    }
+    return res;
+}
+
 static term_t *_parse_atom(token_t **tokens) {
     token_t *t = *tokens;
     switch (t->type) {
-    case TOKEN_NAME:
+    case TOKEN_NAME: {
         *tokens = t->next;
+        int ival = _convert_to_int(sym_name(t->sym));
+        if (ival != -1) {
+            return term_from_church(ival);
+        }
         return term_var(_find_sym(t->sym));
+    }
     case TOKEN_LP: {
         t = t->next;
         token_t *rp = _find_rp(*tokens);

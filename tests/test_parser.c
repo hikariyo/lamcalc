@@ -117,3 +117,11 @@ TEST(parser_church_number_mul) {
     term_destroy(t);
     return PASSED;
 }
+
+TEST(parser_int) {
+    term_t *t = parse_string("14");
+    TEST_ASSERT(t != NULL);
+    TEST_ASSERT(term_as_church(t) == 14);
+    term_destroy(t);
+    return PASSED;
+}

@@ -291,3 +291,19 @@ int term_as_church(const term_t *term) {
 
     return res;
 }
+
+term_t *term_from_church(int num) {
+    static int cnt;
+    char buf[SYM_MAXLEN + 1];
+    cnt++;
+    snprintf(buf, SYM_MAXLEN, "$c%df", cnt);
+    sym_t f = sym_intern(buf);
+    snprintf(buf, SYM_MAXLEN, "$c%dx", cnt);
+    sym_t x = sym_intern(buf);
+
+    term_t *t = term_var(x);
+    for (int i = 0; i < num; i++) {
+        t = term_app(term_var(f), t);
+    }
+    return term_abs(f, term_abs(x, t));
+}
