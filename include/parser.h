@@ -13,6 +13,6 @@ struct token;
 // Parses tokens into a term tree using recursive descent.
 // Returns owned pointer, or NULL on syntax error; does not free original
 // tokens.
-struct term *parse(struct token **tokens, const struct token *end);
+struct term *parse(struct token **tokens, struct token *end);
 
 #endif // PARSER_H
