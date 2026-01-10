@@ -5,6 +5,59 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+static int _num_abs;
+
+struct _stk {
+    sym_t raw;
+    sym_t rep;
+    struct _stk *prev;
+};
+
+static struct _stk *_tail;
+
+static void _add_size_t(char *s, size_t x) {
+    size_t curlen = strlen(s);
+    size_t remaining_space = SYM_MAXLEN + 1 - curlen;
+    int written = snprintf(s + curlen, remaining_space, "%zu", x);
+    assert(!(written < 0 || (size_t)written >= remaining_space));
+}
+
+static void _rename_sym(sym_t raw) {
+    struct _stk *now = malloc(sizeof(struct _stk));
+    assert(now != NULL);
+    now->raw = raw;
+
+    const char *raws = sym_name(raw);
+    char reps[SYM_MAXLEN + 1];
+    strcpy(reps, raws);
+    _add_size_t(reps, _num_abs);
+    now->rep = sym_intern(reps);
+
+    now->prev = _tail;
+    _tail = now;
+}
+
+static sym_t _find_sym(sym_t sym) {
+    sym_t ret = -1;
+    int cnt = 0;
+    for (struct _stk *p = _tail; p != NULL; p = p->prev) {
+        if (p->raw == sym) {
+            if (cnt >= 1) {
+                return ret;
+            }
+
+            cnt++;
+            ret = p->rep;
+        }
+    }
+
+    // Freevar or cnt == 1
+    return sym;
+}
+
+static term_t *_parse(token_t **tokens, token_t *end);
 
 static term_t *_parse_abs(token_t **tokens, token_t *end) {
     token_t *t = *tokens;
@@ -12,13 +65,15 @@ static term_t *_parse_abs(token_t **tokens, token_t *end) {
 
     t = t->next;
     assert(t->type == TOKEN_NAME);
-    sym_t param = t->sym;
+
+    _rename_sym(t->sym);
+    sym_t param = _find_sym(t->sym);
 
     t = t->next;
     assert(t->type == TOKEN_DOT);
 
     t = t->next;
-    term_t *body = parse(&t, end);
+    term_t *body = _parse(&t, end);
 
     *tokens = t;
     return term_abs(param, body);
@@ -44,7 +99,7 @@ static term_t *_parse_atom(token_t **tokens) {
     switch (t->type) {
     case TOKEN_NAME:
         *tokens = t->next;
-        return term_var(t->sym);
+        return term_var(_find_sym(t->sym));
     case TOKEN_LP: {
         t = t->next;
         token_t *rp = _find_rp(*tokens);
@@ -52,7 +107,7 @@ static term_t *_parse_atom(token_t **tokens) {
             printf("error: no matched right parenthesis\n");
             return NULL;
         }
-        term_t *res = parse(&t, rp);
+        term_t *res = _parse(&t, rp);
         assert(t->type == TOKEN_RP);
         *tokens = t->next;
         return res;
@@ -63,7 +118,7 @@ static term_t *_parse_atom(token_t **tokens) {
     }
 }
 
-term_t *parse(token_t **tokens, token_t *end) {
+static term_t *_parse(token_t **tokens, token_t *end) {
     if (*tokens == NULL) {
         printf("error: unexpected null\n");
         return NULL;
@@ -71,6 +126,7 @@ term_t *parse(token_t **tokens, token_t *end) {
 
     switch ((*tokens)->type) {
     case TOKEN_LAMBDA:
+        _num_abs++;
         return _parse_abs(tokens, end);
     case TOKEN_NAME:
     case TOKEN_LP: {
@@ -93,6 +149,18 @@ term_t *parse(token_t **tokens, token_t *end) {
         printf("error: unexpected token\n");
         return NULL;
     }
+}
+
+term_t *parse(token_t **tokens, token_t *end) {
+    _num_abs = 0;
+    _tail = NULL;
+    term_t *term = _parse(tokens, end);
+    while (_tail != NULL) {
+        struct _stk *prev = _tail->prev;
+        free(_tail);
+        _tail = prev;
+    }
+    return term;
 }
 
 term_t *parse_string(const char *str) {

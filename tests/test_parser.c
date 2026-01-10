@@ -78,3 +78,12 @@ TEST(parser_nested_reduction) {
     term_destroy(t);
     return PASSED;
 }
+
+TEST(parser_shadowing) {
+    term_t *t = term_eval(parse_string("(\\x.\\x.x) A B"));
+    TEST_ASSERT(t != NULL);
+    TEST_ASSERT(t->type == TM_VAR);
+    TEST_ASSERT(t->data.var == sym_intern("B"));
+    term_destroy(t);
+    return PASSED;
+}
