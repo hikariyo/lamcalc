@@ -1,5 +1,6 @@
 #include "lexer.h"
 #include "parser.h"
+#include "symbol.h"
 #include "term.h"
 #include "test.h"
 #include <string.h>
@@ -48,5 +49,32 @@ TEST(parser_multiple_app_parenthesis) {
 
     term_destroy(t);
     lex_destroy_tokens(tokens);
+    return PASSED;
+}
+
+TEST(parser_identity) {
+    term_t *t = term_eval(parse_string("(\\x.x) A"));
+    TEST_ASSERT(t != NULL);
+    TEST_ASSERT(t->type == TM_VAR);
+    TEST_ASSERT(t->data.var == sym_intern("A"));
+    term_destroy(t);
+    return PASSED;
+}
+
+TEST(parser_double_app) {
+    term_t *t = term_eval(parse_string("(\\x.\\y. x) A B"));
+    TEST_ASSERT(t != NULL);
+    TEST_ASSERT(t->type == TM_VAR);
+    TEST_ASSERT(t->data.var == sym_intern("A"));
+    term_destroy(t);
+    return PASSED;
+}
+
+TEST(parser_nested_reduction) {
+    term_t *t = term_eval(parse_string("(\\f. f A) (\\x. x)"));
+    TEST_ASSERT(t != NULL);
+    TEST_ASSERT(t->type == TM_VAR);
+    TEST_ASSERT(t->data.var == sym_intern("A"));
+    term_destroy(t);
     return PASSED;
 }
