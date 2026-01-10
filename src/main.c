@@ -1,4 +1,3 @@
-#include "lexer.h"
 #include "parser.h"
 #include "term.h"
 #include <readline/history.h>
