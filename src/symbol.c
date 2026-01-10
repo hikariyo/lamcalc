@@ -17,6 +17,13 @@ static size_t sym_capacity;
 sym_t sym_intern(const char *name) {
     assert(strlen(name) <= SYM_MAXLEN);
 
+    if (sym_capacity == 0) {
+        // Initialize
+        sym_capacity = SYM_DEFAULT_CAPACITY;
+        sym_table = malloc(sym_capacity * sizeof(sym_table_t));
+        assert(sym_table != NULL);
+    }
+
     for (size_t i = 0; i < sym_count; i++) {
         if (!strcmp(sym_table[i].name, name)) {
             return i;
@@ -41,10 +48,9 @@ const char *sym_name(sym_t sym) {
     return sym_table[sym].name;
 }
 
-void sym_init() {
+void sym_destory() {
     free(sym_table);
     sym_count = 0;
-    sym_capacity = SYM_DEFAULT_CAPACITY;
-    sym_table = malloc(sym_capacity * sizeof(sym_table_t));
-    assert(sym_table != NULL);
+    sym_capacity = 0;
+    sym_table = NULL;
 }

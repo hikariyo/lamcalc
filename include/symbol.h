@@ -8,7 +8,7 @@
 
 typedef uint32_t sym_t;
 
-void sym_init();
+void sym_destory();
 
 sym_t sym_intern(const char *name);
 

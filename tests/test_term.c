@@ -2,7 +2,6 @@
 #include "test.h"
 
 TEST(eval_identity) {
-    sym_init();
     sym_t x = sym_intern("x");
     sym_t a = sym_intern("a");
 
@@ -20,7 +19,6 @@ TEST(eval_identity) {
 }
 
 TEST(eval_nested_app) {
-    sym_init();
     sym_t x = sym_intern("x");
     sym_t y = sym_intern("y");
     sym_t z = sym_intern("z");
@@ -46,7 +44,6 @@ TEST(eval_nested_app) {
 }
 
 TEST(eval_higher_order) {
-    sym_init();
     sym_t f = sym_intern("f");
     sym_t x = sym_intern("x");
     sym_t a = sym_intern("a");
@@ -70,7 +67,6 @@ TEST(eval_higher_order) {
 }
 
 TEST(eval_free_var_preserved) {
-    sym_init();
     sym_t x = sym_intern("x");
     sym_t y = sym_intern("y");
     sym_t a = sym_intern("a");

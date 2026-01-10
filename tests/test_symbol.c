@@ -3,7 +3,6 @@
 #include <string.h>
 
 TEST(symbol) {
-    sym_init();
     const char *sym1 = "symbol 1";
     const char *sym2 = "symbol 2";
 
