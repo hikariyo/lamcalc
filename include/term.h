@@ -2,6 +2,7 @@
 #define TERM_H
 
 #include "symbol.h"
+#include <stddef.h>
 
 typedef enum {
     TM_VAR,
@@ -48,5 +49,9 @@ void term_destroy(term_t *term);
 // Note: This function consumes the input 'term'. Use the returned pointer only.
 // The input 'term' may be modified in-place or freed.
 term_t *term_eval(term_t *term);
+
+// Gets a string representation of the term.
+// Caller takes the ownership of returned string.
+char *term_repr(const term_t *term);
 
 #endif // TERM_H

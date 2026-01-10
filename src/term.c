@@ -1,6 +1,9 @@
 #include "term.h"
+#include "symbol.h"
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static term_t *substitute(term_t *term, sym_t name, term_t *val,
                           int *referred_val) {
@@ -95,4 +98,74 @@ void term_destroy(term_t *term) {
         break;
     }
     free(term);
+}
+
+static size_t repr_size(const term_t *term) {
+    switch (term->type) {
+    case TM_VAR:
+        return strlen(sym_name(term->data.var));
+    case TM_ABS:
+        return 2 + strlen(sym_name(term->data.abs.param)) +
+               repr_size(term->data.abs.body);
+    case TM_APP:
+        return 3 + repr_size(term->data.app.left) +
+               repr_size(term->data.app.right);
+    }
+}
+
+static void repr(const term_t *term, char **p) {
+    char *now = *p;
+    switch (term->type) {
+    case TM_VAR: {
+        const char *name = sym_name(term->data.var);
+        while (*name != '\0') {
+            *now = *name;
+            name++;
+            now++;
+        }
+        break;
+    }
+    case TM_APP: {
+        *now = '(';
+        now++;
+
+        repr(term->data.app.left, &now);
+
+        *now = ' ';
+        now++;
+
+        repr(term->data.app.right, &now);
+
+        *now = ')';
+        now++;
+        break;
+    }
+    case TM_ABS: {
+        *now = '\\';
+        now++;
+
+        const char *name = sym_name(term->data.abs.param);
+        while (*name != '\0') {
+            *now = *name;
+            name++;
+            now++;
+        }
+
+        *now = '.';
+        now++;
+
+        repr(term->data.abs.body, &now);
+    }
+    }
+    *p = now;
+}
+
+char *term_repr(const term_t *term) {
+    size_t sz = repr_size(term) + 1;
+    char *res = malloc(sizeof(char) * sz);
+    char *p = res;
+    assert(res != NULL);
+    repr(term, &p);
+    *p = '\0';
+    return res;
 }

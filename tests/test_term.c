@@ -1,8 +1,9 @@
 #include "symbol.h"
 #include "term.h"
 #include "test.h"
+#include <string.h>
 
-TEST(eval_identity) {
+TEST(term_eval_identity) {
     sym_t x = sym_intern("x");
     sym_t a = sym_intern("a");
 
@@ -21,7 +22,7 @@ TEST(eval_identity) {
     return PASSED;
 }
 
-TEST(eval_nested_app) {
+TEST(term_eval_nested_app) {
     sym_t x = sym_intern("x");
     sym_t y = sym_intern("y");
     sym_t z = sym_intern("z");
@@ -45,7 +46,7 @@ TEST(eval_nested_app) {
     return PASSED;
 }
 
-TEST(eval_higher_order) {
+TEST(term_eval_higher_order) {
     sym_t f = sym_intern("f");
     sym_t x = sym_intern("x");
     sym_t a = sym_intern("a");
@@ -68,7 +69,7 @@ TEST(eval_higher_order) {
     return PASSED;
 }
 
-TEST(eval_free_var_preserved) {
+TEST(term_eval_free_var_preserved) {
     sym_t x = sym_intern("x");
     sym_t y = sym_intern("y");
     sym_t a = sym_intern("a");
@@ -90,7 +91,7 @@ TEST(eval_free_var_preserved) {
     return PASSED;
 }
 
-TEST(eval_dummy_var_free) {
+TEST(term_eval_dummy_var_free) {
     // \x.\y.y
     sym_t x = sym_intern("x");
     sym_t y = sym_intern("y");
@@ -105,5 +106,26 @@ TEST(eval_dummy_var_free) {
     TEST_ASSERT(result->data.var == a);
 
     term_destroy(result);
+    return PASSED;
+}
+
+TEST(term_repr) {
+    sym_t x = sym_intern("x");
+    sym_t y = sym_intern("y");
+    sym_t z = sym_intern("z");
+    sym_t a = sym_intern("a");
+
+    term_t *id = term_abs(z, term_var(z));
+    term_t *func = term_abs(x, term_abs(y, term_app(term_var(x), term_var(y))));
+
+    term_t *app1 = term_app(func, id);
+    term_t *app2 = term_app(app1, term_var(a));
+
+    char *str = term_repr(app2);
+    TEST_ASSERT(!strcmp("((\\x.\\y.(x y) \\z.z) a)", str));
+
+    free(str);
+
+    term_destroy(app2);
     return PASSED;
 }
