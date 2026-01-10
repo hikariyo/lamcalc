@@ -69,6 +69,10 @@ static term_t *_eval_lim_depth(term_t *term, int depth) {
     }
     case TM_ABS: {
         term_t *body = _eval_lim_depth(term->data.abs.body, depth + 1);
+        if (body == NULL) {
+            return NULL;
+        }
+
         sym_t param = term->data.abs.param;
         free(term);
         return term_abs(param, body);
