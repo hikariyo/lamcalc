@@ -56,7 +56,7 @@ static term_t *_new_term(term_type_t type) {
 static term_t *_eval_lim_depth(term_t *term, int depth) {
     if (depth > TERM_EVAL_MAX_DEPTH) {
         printf("error: max recursion depth exceeded(possible infinite "
-               "recursion).\n");
+               "recursion)\n");
         return NULL;
     }
 
