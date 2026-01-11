@@ -9,7 +9,7 @@
 static term_t *_copy(const term_t *term) {
     switch (term->type) {
     case TM_VAR:
-        return term_var(term->data.var);
+        return term_var(term->data.var.sym, term->data.var.index);
     case TM_ABS:
         return term_abs(term->data.abs.param, _copy(term->data.abs.body));
     case TM_APP:
@@ -18,53 +18,49 @@ static term_t *_copy(const term_t *term) {
     }
 }
 
+static void _shift(term_t *term, int delta, int cutoff) {
+    switch (term->type) {
+    case TM_APP:
+        _shift(term->data.app.left, delta, cutoff);
+        _shift(term->data.app.right, delta, cutoff);
+        break;
+    case TM_VAR:
+        if (term->data.var.index >= cutoff) {
+            term->data.var.index += delta;
+        }
+        break;
+    case TM_ABS:
+        _shift(term->data.abs.body, delta, cutoff + 1);
+        break;
+    }
+}
+
 // Consumes 'term'.
-static term_t *_subst(term_t *term, sym_t name, const term_t *val) {
+static term_t *_subst(term_t *term, int index, const term_t *val) {
     switch (term->type) {
     case TM_VAR: {
         term_t *ret = NULL;
-        if (term->data.var == name) {
+        if (term->data.var.index == index) {
             ret = _copy(val);
-        } else if (term->data.var == sym_intern("+")) {
-            sym_t a = sym_intern("$+a");
-            sym_t b = sym_intern("$+b");
-            sym_t x = sym_intern("$+x");
-            sym_t f = sym_intern("$+f");
-
-            ret = term_abs(
-                a,
-                term_abs(
-                    b,
-                    term_abs(
-                        f,
-                        term_abs(x, term_app(term_app(term_var(b), term_var(f)),
-                                             term_app(term_app(term_var(a),
-                                                               term_var(f)),
-                                                      term_var(x)))))));
-        } else if (term->data.var == sym_intern("*")) {
-            sym_t a = sym_intern("$*a");
-            sym_t b = sym_intern("$*b");
-            sym_t f = sym_intern("$*f");
-
-            ret = term_abs(
-                a, term_abs(b, term_abs(f, term_app(term_var(a),
-                                                    term_app(term_var(b),
-                                                             term_var(f))))));
+            _shift(ret, index, 0);
         } else {
             ret = _copy(term);
+            if (ret->data.var.index > index) {
+                ret->data.var.index--;
+            }
         }
         term_destroy(term);
         return ret;
     }
     case TM_ABS: {
         sym_t param = term->data.abs.param;
-        term_t *body = _subst(term->data.abs.body, name, val);
+        term_t *body = _subst(term->data.abs.body, index + 1, val);
         free(term);
         return term_abs(param, body);
     }
     case TM_APP: {
-        term_t *left = _subst(term->data.app.left, name, val);
-        term_t *right = _subst(term->data.app.right, name, val);
+        term_t *left = _subst(term->data.app.left, index, val);
+        term_t *right = _subst(term->data.app.right, index, val);
         free(term);
         return term_app(left, right);
     }
@@ -89,8 +85,9 @@ static term_t *_eval_lim_depth(term_t *term, int depth) {
 
     switch (term->type) {
     case TM_VAR: {
-        // Builtin functions.
-        return _subst(term, -1, NULL);
+        term_t *ret = _copy(term);
+        term_destroy(term);
+        return ret;
     }
     case TM_ABS: {
         term_t *body = _eval_lim_depth(term->data.abs.body, depth + 1);
@@ -120,8 +117,7 @@ static term_t *_eval_lim_depth(term_t *term, int depth) {
 
         free(term);
         if (left->type == TM_ABS) {
-            term_t *body =
-                _subst(left->data.abs.body, left->data.abs.param, right);
+            term_t *body = _subst(left->data.abs.body, 0, right);
             free(left);
             term_destroy(right);
             return _eval_lim_depth(body, depth + 1);
@@ -132,11 +128,36 @@ static term_t *_eval_lim_depth(term_t *term, int depth) {
     }
 }
 
-term_t *term_eval(term_t *term) { return _eval_lim_depth(term, 0); }
+term_t *term_fuck(term_t *term) { return _eval_lim_depth(term, 0); }
 
-term_t *term_var(sym_t sym) {
+term_t *term_eval(term_t *term) {
+    sym_t f = sym_intern("f");
+    sym_t x = sym_intern("x");
+    sym_t a = sym_intern("a");
+    sym_t b = sym_intern("b");
+
+    term_t *plus = term_abs(
+        a, term_abs(
+               b, term_abs(
+                      f, term_abs(x, term_app(term_app(term_var(b, 2),
+                                                       term_var(f, 1)),
+                                              term_app(term_app(term_var(a, 3),
+                                                                term_var(f, 1)),
+                                                       term_var(x, 0)))))));
+    term_t *mul = term_abs(
+        a, term_abs(b, term_abs(f, term_app(term_var(a, 2),
+                                            term_app(term_var(b, 1),
+                                                     term_var(f, 0))))));
+
+    term = term_app(term_abs(sym_intern("+"), term), plus);
+    term = term_app(term_abs(sym_intern("*"), term), mul);
+    return _eval_lim_depth(term, 0);
+}
+
+term_t *term_var(sym_t sym, int index) {
     term_t *term = _new_term(TM_VAR);
-    term->data.var = sym;
+    term->data.var.sym = sym;
+    term->data.var.index = index;
     return term;
 }
 
@@ -171,7 +192,7 @@ void term_destroy(term_t *term) {
 
 static size_t _repr_size(const term_t *term) {
     int church = term_as_church(term);
-    if (church != -1) {
+    if (church != TERM_INVALID_CHURCH) {
         if (church == 0) {
             return 1;
         }
@@ -185,7 +206,7 @@ static size_t _repr_size(const term_t *term) {
 
     switch (term->type) {
     case TM_VAR:
-        return strlen(sym_name(term->data.var));
+        return strlen(sym_name(term->data.var.sym));
     case TM_ABS:
         return 2 + strlen(sym_name(term->data.abs.param)) +
                _repr_size(term->data.abs.body);
@@ -197,7 +218,7 @@ static size_t _repr_size(const term_t *term) {
 
 static void _repr(const term_t *term, char **p) {
     int church = term_as_church(term);
-    if (church != -1) {
+    if (church != TERM_INVALID_CHURCH) {
         // The buffer size is calculated in advance.
         int x = snprintf(*p, INT_MAX, "%d", church);
         assert(x > 0);
@@ -208,7 +229,7 @@ static void _repr(const term_t *term, char **p) {
     char *now = *p;
     switch (term->type) {
     case TM_VAR: {
-        const char *name = sym_name(term->data.var);
+        const char *name = sym_name(term->data.var.sym);
         while (*name != '\0') {
             *now = *name;
             name++;
@@ -263,32 +284,25 @@ char *term_repr(const term_t *term) {
 
 int term_as_church(const term_t *term) {
     if (term->type != TM_ABS) {
-        return -1;
+        return TERM_INVALID_CHURCH;
     }
-
-    sym_t f = term->data.abs.param;
 
     term = term->data.abs.body;
     if (term->type != TM_ABS) {
-        return -1;
-    }
-
-    sym_t x = term->data.abs.param;
-    if (f == x) {
-        return -1;
+        return TERM_INVALID_CHURCH;
     }
 
     term = term->data.abs.body;
 
     int res = 0;
     while (term != NULL) {
-        if (term->type == TM_VAR && term->data.var == x) {
+        if (term->type == TM_VAR && term->data.var.index == 0) {
             break;
         }
 
         if (term->type != TM_APP || term->data.app.left->type != TM_VAR ||
-            term->data.app.left->data.var != f) {
-            return -1;
+            term->data.app.left->data.var.index != 1) {
+            return TERM_INVALID_CHURCH;
         }
 
         res++;
@@ -307,9 +321,9 @@ term_t *term_from_church(int num) {
     snprintf(buf, SYM_MAXLEN, "$c%dx", cnt);
     sym_t x = sym_intern(buf);
 
-    term_t *t = term_var(x);
+    term_t *t = term_var(x, 0);
     for (int i = 0; i < num; i++) {
-        t = term_app(term_var(f), t);
+        t = term_app(term_var(f, 1), t);
     }
     return term_abs(f, term_abs(x, t));
 }

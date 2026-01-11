@@ -8,54 +8,38 @@
 #include <stdlib.h>
 #include <string.h>
 
-static int _num_abs;
+#define _INVALID_INT -1
 
-struct _stk {
-    sym_t raw;
-    sym_t rep;
-    struct _stk *prev;
-};
+typedef struct sym_stack {
+    sym_t sym;
+    struct sym_stack *prev;
+} sym_stack_t;
 
-static struct _stk *_tail;
+static sym_stack_t *_tail;
 
-static void _add_size_t(char *s, size_t x) {
-    size_t curlen = strlen(s);
-    size_t remaining_space = SYM_MAXLEN + 1 - curlen;
-    int written = snprintf(s + curlen, remaining_space, "%zu", x);
-    assert(!(written < 0 || (size_t)written >= remaining_space));
+static void _push_stack(sym_t sym) {
+    sym_stack_t *tail = (sym_stack_t *)malloc(sizeof(sym_stack_t));
+    assert(tail != NULL);
+    tail->prev = _tail;
+    tail->sym = sym;
+    _tail = tail;
 }
 
-static void _rename_sym(sym_t raw) {
-    struct _stk *now = malloc(sizeof(struct _stk));
-    assert(now != NULL);
-    now->raw = raw;
-
-    const char *raws = sym_name(raw);
-    char reps[SYM_MAXLEN + 1];
-    strcpy(reps, raws);
-    _add_size_t(reps, _num_abs);
-    now->rep = sym_intern(reps);
-
-    now->prev = _tail;
-    _tail = now;
+static void _pop_stack() {
+    sym_stack_t *prev = _tail->prev;
+    free(_tail);
+    _tail = prev;
 }
 
-static sym_t _find_sym(sym_t sym) {
-    sym_t ret = -1;
-    int cnt = 0;
-    for (struct _stk *p = _tail; p != NULL; p = p->prev) {
-        if (p->raw == sym) {
-            if (cnt >= 1) {
-                return ret;
-            }
-
-            cnt++;
-            ret = p->rep;
+static int _find_stack_index(sym_t sym) {
+    int res = 0;
+    for (sym_stack_t *p = _tail; p != NULL; p = p->prev) {
+        if (p->sym == sym) {
+            return res;
         }
+        res++;
     }
-
-    // Freevar or cnt == 1
-    return sym;
+    return TERM_VAR_INVALID_INDEX;
 }
 
 static term_t *_parse(token_t **tokens, token_t *end);
@@ -83,8 +67,8 @@ static term_t *_parse_abs(token_t **tokens, token_t *end) {
         return NULL;
     }
 
-    _rename_sym(t->sym);
-    sym_t param = _find_sym(t->sym);
+    _push_stack(t->sym);
+    sym_t param = t->sym;
 
     t = t->next;
     if (t == NULL) {
@@ -98,6 +82,7 @@ static term_t *_parse_abs(token_t **tokens, token_t *end) {
 
     t = t->next;
     term_t *body = _parse(&t, end);
+    _pop_stack();
     // Body will be null on syntax error.
     if (body == NULL) {
         return NULL;
@@ -126,7 +111,7 @@ static int _convert_to_int(const char *s) {
     int res = 0;
     for (; *s; s++) {
         if (!isdigit(*s)) {
-            return -1;
+            return _INVALID_INT;
         }
         res = res * 10 + *s - '0';
     }
@@ -139,10 +124,10 @@ static term_t *_parse_atom(token_t **tokens) {
     case TOKEN_NAME: {
         *tokens = t->next;
         int ival = _convert_to_int(sym_name(t->sym));
-        if (ival != -1) {
+        if (ival != _INVALID_INT) {
             return term_from_church(ival);
         }
-        return term_var(_find_sym(t->sym));
+        return term_var(t->sym, _find_stack_index(t->sym));
     }
     case TOKEN_LP: {
         t = t->next;
@@ -175,7 +160,6 @@ static term_t *_parse(token_t **tokens, token_t *end) {
 
     switch ((*tokens)->type) {
     case TOKEN_LAMBDA:
-        _num_abs++;
         return _parse_abs(tokens, end);
     case TOKEN_NAME:
     case TOKEN_LP: {
@@ -206,13 +190,14 @@ static term_t *_parse(token_t **tokens, token_t *end) {
 }
 
 term_t *parse(token_t **tokens, token_t *end) {
-    _num_abs = 0;
     _tail = NULL;
+
+    _push_stack(sym_intern("*"));
+    _push_stack(sym_intern("+"));
+
     term_t *term = _parse(tokens, end);
     while (_tail != NULL) {
-        struct _stk *prev = _tail->prev;
-        free(_tail);
-        _tail = prev;
+        _pop_stack();
     }
     return term;
 }
