@@ -10,12 +10,6 @@ The primary purpose of this project is to serve as a hands-on exercise in:
 
 + Multi-file Project Architecture: Organizing multiple files using `xmake`.
 
-## The "Y" Limitation
-
-Unfortunately, this interpreter does not support the Y-combinator.
-
-This is a side effect of the Deep Evaluation strategy: while it allows for Church numeral decoding, it causes self-referential terms to expand infinitely during normalization.
-
 ## Core Functionality
 
 + Church Arithmetic: Supports addition and multiplication. It can automatically convert between Lambda expressions and normal numbers (e.g., transforming a Church term `\f.\x.(f (f x))` into `2`).
@@ -60,5 +54,7 @@ Example interaction:
 \y.y
 > (\x.\y.x) 2 3
 2
+> Y (\f.\n. ifz n 1 (* n (f (pred n)))) 4
+24
 > exit
 ```
