@@ -248,15 +248,8 @@ static size_t _repr_size(const term_t *term) {
 
     switch (term->type) {
     case TM_VAR:
-        // name(de bruijn index)
-        // name(FREE)
-
-        if (term->data.var.index < 0) {
-            return strlen(sym_name(term->data.var.sym)) + 6;
-        } else {
-            return strlen(sym_name(term->data.var.sym)) + 2 +
-                   _repr_size_t_size(term->data.var.index);
-        }
+        // name
+        return strlen(sym_name(term->data.var.sym));
     case TM_ABS:
         // (\\param.body)
         return 4 + strlen(sym_name(term->data.abs.param)) +
@@ -287,30 +280,6 @@ static void _repr(const term_t *term, char **p) {
             name++;
             now++;
         }
-        // The buffer size is calculated in advance.
-        *now = '[';
-        now++;
-
-        if (term->data.var.index >= 0) {
-            int x = snprintf(now, INT_MAX, "%d", term->data.var.index);
-            assert(x > 0);
-            now += x;
-        } else {
-            *now = 'F';
-            now++;
-
-            *now = 'R';
-            now++;
-
-            *now = 'E';
-            now++;
-
-            *now = 'E';
-            now++;
-        }
-
-        *now = ']';
-        now++;
 
         break;
     }
