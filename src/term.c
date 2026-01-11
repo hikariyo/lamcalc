@@ -224,10 +224,10 @@ term_t *term_eval(term_t *term) {
         return NULL;
     }
 
-    term = _eval_lim_depth_deep(term, 0);
-    if (term == NULL) {
-        return NULL;
-    }
+    // term = _eval_lim_depth_deep(term, 0);
+    // if (term == NULL) {
+    //     return NULL;
+    // }
 
     return term;
 }
@@ -298,9 +298,11 @@ static size_t _repr_size(const term_t *term) {
                    _repr_size_t_size(term->data.var.index);
         }
     case TM_ABS:
-        return 2 + strlen(sym_name(term->data.abs.param)) +
+        // (\\param.body)
+        return 4 + strlen(sym_name(term->data.abs.param)) +
                _repr_size(term->data.abs.body);
     case TM_APP:
+        // (left right)
         return 3 + _repr_size(term->data.app.left) +
                _repr_size(term->data.app.right);
     }
@@ -326,7 +328,7 @@ static void _repr(const term_t *term, char **p) {
             now++;
         }
         // The buffer size is calculated in advance.
-        *now = '(';
+        *now = '[';
         now++;
 
         if (term->data.var.index >= 0) {
@@ -347,7 +349,7 @@ static void _repr(const term_t *term, char **p) {
             now++;
         }
 
-        *now = ')';
+        *now = ']';
         now++;
 
         break;
@@ -368,6 +370,9 @@ static void _repr(const term_t *term, char **p) {
         break;
     }
     case TM_ABS: {
+        *now = '(';
+        now++;
+
         *now = '\\';
         now++;
 
@@ -382,6 +387,9 @@ static void _repr(const term_t *term, char **p) {
         now++;
 
         _repr(term->data.abs.body, &now);
+
+        *now = ')';
+        now++;
     }
     }
     *p = now;
