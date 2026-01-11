@@ -50,8 +50,6 @@ Example interaction:
 5
 > (* 3 3)
 9
-> (\x.\y.x y)(\x. x)
-\y.y
 > (\x.\y.x) 2 3
 2
 > Y (\f.\n. ifz n 1 (* n (f (pred n)))) 4
