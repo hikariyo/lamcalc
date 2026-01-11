@@ -43,16 +43,18 @@ xmake f -m release # or debug if you want
 xmake run lamcalc
 ```
 
-Example interaction:
+**Example interaction**:
 
 ```text
-> (+ 2 3)
-5
-> (* 3 3)
-9
+> + 2 3
+5 (646.00 μs)
+> * 3 3
+9 (958.00 μs)
+> + 2 (* 5 6)
+32 (1.47 ms)
 > (\x.\y.x) 2 3
-2
+2 (489.00 μs)
 > Y (\f.\n. ifz n 1 (* n (f (pred n)))) 4
-24
+24 (1288.64 ms)
 > exit
 ```
