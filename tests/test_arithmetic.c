@@ -7,7 +7,7 @@
 #include "test.h"
 #include <stdio.h>
 
-TEST(builtin_add) {
+TEST(arithmetic_add) {
     term_t *t = term_eval(parse_string("+ 4 6"));
     TEST_ASSERT(t != NULL);
     TEST_ASSERT(term_as_church(t) == 10);
@@ -15,7 +15,7 @@ TEST(builtin_add) {
     return PASSED;
 }
 
-TEST(builtin_mul) {
+TEST(arithmetic_mul) {
     term_t *t = term_eval(parse_string("* 3 7"));
     TEST_ASSERT(t != NULL);
     TEST_ASSERT(term_as_church(t) == 21);
@@ -23,7 +23,7 @@ TEST(builtin_mul) {
     return PASSED;
 }
 
-TEST(builtin_pred) {
+TEST(arithmetic_pred) {
     // pred 5 -> 4
     term_t *t1 = term_eval(parse_string("pred 5"));
     TEST_ASSERT(term_as_church(t1) == 4);
@@ -36,7 +36,7 @@ TEST(builtin_pred) {
     return PASSED;
 }
 
-TEST(builtin_iszero) {
+TEST(arithmetic_iszero) {
     term_t *t1 = term_eval(parse_string("iszero 0 1 2"));
     TEST_ASSERT(term_as_church(t1) == 1);
     term_destroy(t1);
@@ -47,14 +47,14 @@ TEST(builtin_iszero) {
     return PASSED;
 }
 
-TEST(builtin_sub_mock) {
+TEST(arithmetic_sub) {
     term_t *t = term_eval(parse_string("(\\n.\\m. m pred n) 10 4"));
     TEST_ASSERT(term_as_church(t) == 6);
     term_destroy(t);
     return PASSED;
 }
 
-TEST(builtin_recursive_sum) {
+TEST(arithemetic_sum) {
     term_t *t =
         term_eval(parse_string("Y (\\f.\\n. iszero n 0 (+ n (f (pred n)))) 5"));
 
@@ -65,7 +65,7 @@ TEST(builtin_recursive_sum) {
     return PASSED;
 }
 
-TEST(builtin_recursive_factorial) {
+TEST(arithemetic_factorial) {
     const char *fact_str = "Y (\\f.\\n. iszero n 1 (* n (f (pred n)))) 4";
     term_t *t = term_eval(parse_string(fact_str));
 
