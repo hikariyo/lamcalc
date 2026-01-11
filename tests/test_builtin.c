@@ -36,14 +36,12 @@ TEST(builtin_pred) {
     return PASSED;
 }
 
-TEST(builtin_ifz) {
-    // ifz 0 true false -> true (1)
-    term_t *t1 = term_eval(parse_string("ifz 0 1 2"));
+TEST(builtin_iszero) {
+    term_t *t1 = term_eval(parse_string("iszero 0 1 2"));
     TEST_ASSERT(term_as_church(t1) == 1);
     term_destroy(t1);
 
-    // ifz 5 true false -> false (2)
-    term_t *t2 = term_eval(parse_string("ifz 5 1 2"));
+    term_t *t2 = term_eval(parse_string("iszero 5 1 2"));
     TEST_ASSERT(term_as_church(t2) == 2);
     term_destroy(t2);
     return PASSED;
@@ -58,7 +56,7 @@ TEST(builtin_sub_mock) {
 
 TEST(builtin_recursive_sum) {
     term_t *t =
-        term_eval(parse_string("Y (\\f.\\n. ifz n 0 (+ n (f (pred n)))) 5"));
+        term_eval(parse_string("Y (\\f.\\n. iszero n 0 (+ n (f (pred n)))) 5"));
 
     // sum(5) = 15
     TEST_ASSERT(t != NULL);
@@ -68,7 +66,7 @@ TEST(builtin_recursive_sum) {
 }
 
 TEST(builtin_recursive_factorial) {
-    const char *fact_str = "Y (\\f.\\n. ifz n 1 (* n (f (pred n)))) 4";
+    const char *fact_str = "Y (\\f.\\n. iszero n 1 (* n (f (pred n)))) 4";
     term_t *t = term_eval(parse_string(fact_str));
 
     TEST_ASSERT(t != NULL);

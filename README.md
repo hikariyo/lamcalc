@@ -54,7 +54,7 @@ xmake run lamcalc
 32 (1.47 ms)
 > (\x.\y.x) 2 3
 2 (489.00 μs)
-> Y (\f.\n. ifz n 1 (* n (f (pred n)))) 4
+> Y (\f.\n. iszero n 1 (* n (f (pred n)))) 4
 24 (1288.64 ms)
 > exit
 ```

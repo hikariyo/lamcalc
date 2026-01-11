@@ -107,6 +107,13 @@ term_t *term_eval(term_t *term) {
     sym_t a = sym_intern("a");
     sym_t b = sym_intern("b");
 
+    sym_t n = sym_intern("n");
+    sym_t g = sym_intern("g");
+    sym_t h = sym_intern("h");
+    sym_t u = sym_intern("u");
+    sym_t v = sym_intern("v");
+    sym_t p = sym_intern("p");
+
     term_t *plus = term_abs(
         a, term_abs(
                b, term_abs(
@@ -128,12 +135,6 @@ term_t *term_eval(term_t *term) {
     term_t *True = term_abs(a, term_abs(b, term_var(a, 1)));
     term_t *False = term_abs(a, term_abs(b, term_var(b, 0)));
 
-    sym_t n = sym_intern("n");
-    sym_t g = sym_intern("g");
-    sym_t h = sym_intern("h");
-    sym_t u = sym_intern("u");
-    sym_t v = sym_intern("v");
-
     term_t *pred = term_abs(
         n,
         term_abs(
@@ -153,13 +154,34 @@ term_t *term_eval(term_t *term) {
                            ),
                        term_abs(v, term_var(v, 0)) // extract result
                        ))));
-    term_t *ifz = term_abs(
+    term_t *iszero = term_abs(
+        n, term_app(term_app(term_var(n, 0), term_abs(x, term_copy(False))),
+                    term_copy(True)));
+
+    term_t *cons = term_abs(
+        a, term_abs(b, term_abs(f, term_app(term_var(f, 0),
+                                            term_app(term_var(a, 2),
+                                                     term_var(b, 1))))));
+
+    term_t *head = term_abs(
+        p, term_app(term_var(p, 0), term_abs(a, term_abs(b, term_var(a, 1)))));
+
+    term_t *tail = term_abs(
+        p, term_app(term_var(p, 0), term_abs(a, term_abs(b, term_var(b, 0)))));
+
+    term_t *nil = term_abs(a, term_abs(b, term_var(b, 0)));
+    term_t *isnil = term_abs(
         n, term_app(term_app(term_var(n, 0), term_abs(x, term_copy(False))),
                     term_copy(True)));
 
     // term_t* parse(token_t** tokens, token_t* end)
     // should be kept updated with this
-    term = term_app(term_abs(sym_intern("ifz"), term), ifz);
+    term = term_app(term_abs(sym_intern("isnil"), term), isnil);
+    term = term_app(term_abs(sym_intern("nil"), term), nil);
+    term = term_app(term_abs(sym_intern("tail"), term), tail);
+    term = term_app(term_abs(sym_intern("head"), term), head);
+    term = term_app(term_abs(sym_intern("cons"), term), cons);
+    term = term_app(term_abs(sym_intern("iszero"), term), iszero);
     term = term_app(term_abs(sym_intern("pred"), term), pred);
     term = term_app(term_abs(sym_intern("false"), term), False);
     term = term_app(term_abs(sym_intern("true"), term), True);
