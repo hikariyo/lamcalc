@@ -39,18 +39,18 @@ static void _shift(term_t *term, int delta, int cutoff) {
 static term_t *_subst(term_t *term, int index, const term_t *val) {
     switch (term->type) {
     case TM_VAR: {
-        term_t *ret = NULL;
         if (term->data.var.index == index) {
-            ret = _copy(val);
+            term_t *ret = _copy(val);
             _shift(ret, index, 0);
-        } else {
-            ret = _copy(term);
-            if (ret->data.var.index > index) {
-                ret->data.var.index--;
-            }
+            term_destroy(term);
+            return ret;
+        } else if (term->data.var.index > index) {
+            term_t *ret = _copy(term);
+            ret->data.var.index--;
+            term_destroy(term);
+            return ret;
         }
-        term_destroy(term);
-        return ret;
+        return term;
     }
     case TM_ABS: {
         sym_t param = term->data.abs.param;
@@ -85,9 +85,7 @@ static term_t *_eval_lim_depth(term_t *term, int depth) {
 
     switch (term->type) {
     case TM_VAR: {
-        term_t *ret = _copy(term);
-        term_destroy(term);
-        return ret;
+        return term;
     }
     case TM_ABS: {
         term_t *body = _eval_lim_depth(term->data.abs.body, depth + 1);
