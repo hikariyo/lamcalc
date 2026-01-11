@@ -18,20 +18,27 @@ int main() {
             break;
         }
 
-        if (*input != '\0') {
-            add_history(input);
-
-            term_t *term = parse_string(input);
-            if (term != NULL) {
-                term = term_eval(term);
-                if (term != NULL) {
-                    char *repr = term_repr(term);
-                    printf("%s\n", repr);
-                    free(repr);
-                    term_destroy(term);
-                }
-            }
+        if (*input == '\0') {
+            goto next;
         }
+
+        add_history(input);
+        term_t *term = parse_string(input);
+        if (term == NULL) {
+            goto next;
+        }
+
+        term = term_eval(term);
+        if (term == NULL) {
+            goto next;
+        }
+
+        char *repr = term_repr(term);
+        printf("%s\n", repr);
+        free(repr);
+        term_destroy(term);
+
+    next:
         free(input);
     }
     return 0;
