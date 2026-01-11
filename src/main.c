@@ -22,17 +22,14 @@ int main() {
             add_history(input);
 
             term_t *term = parse_string(input);
-
-            if (term == NULL) {
-                continue;
-            }
-
-            term = term_eval(term);
             if (term != NULL) {
-                char *repr = term_repr(term);
-                printf("%s\n", repr);
-                free(repr);
-                term_destroy(term);
+                term = term_eval(term);
+                if (term != NULL) {
+                    char *repr = term_repr(term);
+                    printf("%s\n", repr);
+                    free(repr);
+                    term_destroy(term);
+                }
             }
         }
         free(input);

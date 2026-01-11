@@ -69,3 +69,19 @@ void lex_destroy_tokens(token_t *tokens) {
         p = next;
     }
 }
+
+const char *lex_token_type_repr(token_type_t type) {
+    switch (type) {
+    case TOKEN_NAME:
+        return "NAME";
+    case TOKEN_LAMBDA:
+        return "LAMBDA";
+    case TOKEN_LP:
+        return "LP";
+    case TOKEN_RP:
+        return "RP";
+    case TOKEN_DOT:
+        return "DOT";
+    }
+    assert(0);
+}

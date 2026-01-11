@@ -24,4 +24,8 @@ token_t *lex_string(const char *str);
 // Destroys the token stream. Consumes 'tokens'.
 void lex_destroy_tokens(token_t *tokens);
 
+// Gets the string representation of given token type.
+// Returns borrowed pointer.
+const char *lex_token_type_repr(token_type_t type);
+
 #endif // LEXER_H

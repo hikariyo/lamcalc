@@ -62,19 +62,46 @@ static term_t *_parse(token_t **tokens, token_t *end);
 
 static term_t *_parse_abs(token_t **tokens, token_t *end) {
     token_t *t = *tokens;
-    assert(t->type == TOKEN_LAMBDA);
+
+    if (t == NULL) {
+        printf("error: unexpected null in rule AbsTerm; expected NAME\n");
+        return NULL;
+    } else if (t->type != TOKEN_LAMBDA) {
+        printf("error: unexpected token %s in rule AbsTerm; expected LAMBDA\n",
+               lex_token_type_repr(t->type));
+        return NULL;
+    }
 
     t = t->next;
-    assert(t->type == TOKEN_NAME);
+
+    if (t == NULL) {
+        printf("error: unexpected null in rule AbsTerm; expected NAME\n");
+        return NULL;
+    } else if (t->type != TOKEN_NAME) {
+        printf("error: unexpected token %s in rule AbsTerm; expected NAME\n",
+               lex_token_type_repr(t->type));
+        return NULL;
+    }
 
     _rename_sym(t->sym);
     sym_t param = _find_sym(t->sym);
 
     t = t->next;
-    assert(t->type == TOKEN_DOT);
+    if (t == NULL) {
+        printf("error: unexpected null in rule AbsTerm; expected DOT\n");
+        return NULL;
+    } else if (t->type != TOKEN_DOT) {
+        printf("error: unexpected token %s in rule AbsTerm; expected DOT\n",
+               lex_token_type_repr(t->type));
+        return NULL;
+    }
 
     t = t->next;
     term_t *body = _parse(&t, end);
+    // Body will be null on syntax error.
+    if (body == NULL) {
+        return NULL;
+    }
 
     *tokens = t;
     return term_abs(param, body);
@@ -121,23 +148,28 @@ static term_t *_parse_atom(token_t **tokens) {
         t = t->next;
         token_t *rp = _find_rp(*tokens);
         if (rp == NULL) {
-            printf("error: no matched right parenthesis\n");
+            printf("error: no matched right parenthesis in rule Atom\n");
             return NULL;
         }
         term_t *res = _parse(&t, rp);
+        if (res == NULL) {
+            return NULL;
+        }
         assert(t->type == TOKEN_RP);
         *tokens = t->next;
         return res;
     }
     default:
-        printf("error: unexpected token\n");
+        printf("error: unexpected token %s in rule Atom; expected NAME | LP\n",
+               lex_token_type_repr(t->type));
         return NULL;
     }
 }
 
 static term_t *_parse(token_t **tokens, token_t *end) {
     if (*tokens == NULL) {
-        printf("error: unexpected null\n");
+        printf("error: unexpected null in rule Term; expected LAMBDA | NAME | "
+               "LP\n");
         return NULL;
     }
 
@@ -153,6 +185,9 @@ static term_t *_parse(token_t **tokens, token_t *end) {
 
             // A NULL returned from parse_atom signals a syntax error.
             if (atom == NULL) {
+                if (now != NULL) {
+                    term_destroy(now);
+                }
                 return NULL;
             }
 
@@ -163,7 +198,9 @@ static term_t *_parse(token_t **tokens, token_t *end) {
         return now;
     }
     default:
-        printf("error: unexpected token\n");
+        printf("error: unexpected token %s in rule Term; expected LAMBDA | "
+               "NAME | LP\n",
+               lex_token_type_repr((*tokens)->type));
         return NULL;
     }
 }
