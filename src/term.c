@@ -128,8 +128,6 @@ static term_t *_eval_lim_depth(term_t *term, int depth) {
     }
 }
 
-term_t *term_fuck(term_t *term) { return _eval_lim_depth(term, 0); }
-
 term_t *term_eval(term_t *term) {
     sym_t f = sym_intern("f");
     sym_t x = sym_intern("x");

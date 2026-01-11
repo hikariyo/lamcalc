@@ -72,6 +72,4 @@ int term_as_church(const term_t *term);
 // Returns an owned pointer.
 term_t *term_from_church(int num);
 
-term_t *term_fuck(term_t *term);
-
 #endif // TERM_H
