@@ -50,16 +50,13 @@ static term_t *_subst(term_t *term, int index, const term_t *val) {
         return term;
     }
     case TM_ABS: {
-        sym_t param = term->data.abs.param;
-        term_t *body = _subst(term->data.abs.body, index + 1, val);
-        free(term);
-        return term_abs(param, body);
+        term->data.abs.body = _subst(term->data.abs.body, index + 1, val);
+        return term;
     }
     case TM_APP: {
-        term_t *left = _subst(term->data.app.left, index, val);
-        term_t *right = _subst(term->data.app.right, index, val);
-        free(term);
-        return term_app(left, right);
+        term->data.app.left = _subst(term->data.app.left, index, val);
+        term->data.app.right = _subst(term->data.app.right, index, val);
+        return term;
     }
     }
 }
@@ -131,11 +128,11 @@ static term_t *_eval_lim_depth_lazy(term_t *term, int depth) {
         return NULL;
     }
 
-    switch (term->type) {
-    case TM_VAR:
-    case TM_ABS:
-        return term;
-    case TM_APP: {
+    for (;;) {
+        if (term->type != TM_APP) {
+            return term;
+        }
+
         term_t *left = _eval_lim_depth_lazy(term->data.app.left, depth + 1);
         term_t *right = term->data.app.right;
         free(term);
@@ -148,12 +145,12 @@ static term_t *_eval_lim_depth_lazy(term_t *term, int depth) {
             term_t *body = _subst(left->data.abs.body, 0, right);
             free(left);
             term_destroy(right);
-            return _eval_lim_depth_lazy(body, depth + 1);
-        }
 
-        right = _eval_lim_depth_lazy(right, depth + 1);
-        return term_app(left, right);
-    }
+            term = body;
+        } else {
+            right = _eval_lim_depth_lazy(right, depth + 1);
+            return term_app(left, right);
+        }
     }
 }
 
