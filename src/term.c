@@ -45,10 +45,7 @@ static term_t *_subst(term_t *term, int index, const term_t *val) {
             term_destroy(term);
             return ret;
         } else if (term->data.var.index > index) {
-            term_t *ret = _copy(term);
-            ret->data.var.index--;
-            term_destroy(term);
-            return ret;
+            term->data.var.index--;
         }
         return term;
     }

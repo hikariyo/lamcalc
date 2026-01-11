@@ -4,7 +4,7 @@
 #include "symbol.h"
 #include <stddef.h>
 
-#define TERM_EVAL_MAX_DEPTH 1024
+#define TERM_EVAL_MAX_DEPTH 65536
 #define TERM_VAR_INVALID_INDEX -998244353
 #define TERM_INVALID_CHURCH -1
 
