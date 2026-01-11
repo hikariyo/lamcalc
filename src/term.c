@@ -140,22 +140,22 @@ static term_t *_eval_lim_depth_lazy(term_t *term, int depth) {
         return term;
     case TM_APP: {
         term_t *left = _eval_lim_depth_lazy(term->data.app.left, depth + 1);
+        term_t *right = term->data.app.right;
+        free(term);
         if (left == NULL) {
-            term_destroy(term->data.app.right);
-            free(term);
+            term_destroy(right);
             return NULL;
         }
 
         if (left->type == TM_ABS) {
-            term_t *body = _subst(left->data.abs.body, 0, term->data.app.right);
+            term_t *body = _subst(left->data.abs.body, 0, right);
             free(left);
-            term_destroy(term->data.app.right);
-            free(term);
+            term_destroy(right);
             return _eval_lim_depth_lazy(body, depth + 1);
         }
 
-        free(term);
-        return term_app(left, term->data.app.right);
+        right = _eval_lim_depth_lazy(right, depth + 1);
+        return term_app(left, right);
     }
     }
 }
@@ -184,6 +184,44 @@ term_t *term_eval(term_t *term) {
     term_t *Yr = _copy(Yl);
     term_t *Y = term_abs(f, term_app(Yl, Yr));
 
+    term_t *True = term_abs(a, term_abs(b, term_var(a, 1)));
+    term_t *False = term_abs(a, term_abs(b, term_var(b, 0)));
+
+    sym_t n = sym_intern("n");
+    sym_t g = sym_intern("g");
+    sym_t h = sym_intern("h");
+    sym_t u = sym_intern("u");
+    sym_t v = sym_intern("v");
+
+    term_t *pred = term_abs(
+        n,
+        term_abs(
+            f,
+            term_abs(
+                x, term_app(
+                       term_app(
+                           term_app(
+                               term_var(n, 2), // n
+                               term_abs(
+                                   g, // step function
+                                   term_abs(
+                                       h, term_app(term_var(h, 0),
+                                                   term_app(term_var(g, 1),
+                                                            term_var(f, 3)))))),
+                           term_abs(u, term_var(x, 1)) // initial value
+                           ),
+                       term_abs(v, term_var(v, 0)) // extract result
+                       ))));
+    term_t *ifz = term_abs(
+        n, term_app(term_app(term_var(n, 0), term_abs(x, _copy(False))),
+                    _copy(True)));
+
+    // term_t* parse(token_t** tokens, token_t* end)
+    // should be kept updated with this
+    term = term_app(term_abs(sym_intern("ifz"), term), ifz);
+    term = term_app(term_abs(sym_intern("pred"), term), pred);
+    term = term_app(term_abs(sym_intern("false"), term), False);
+    term = term_app(term_abs(sym_intern("true"), term), True);
     term = term_app(term_abs(sym_intern("Y"), term), Y);
     term = term_app(term_abs(sym_intern("+"), term), plus);
     term = term_app(term_abs(sym_intern("*"), term), mul);
