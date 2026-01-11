@@ -59,11 +59,55 @@ TEST(parser_nested_reduction) {
     return PASSED;
 }
 
-TEST(parser_shadowing) {
-    term_t *t = term_eval(parse_string("(\\x.\\x.x) A B"));
+TEST(parser_variable_shadowing) {
+    term_t *t = term_eval(
+        parse_string("(\\x. \\x. x) (\\f.\\x. f x) (\\f.\\x. f (f x))"));
+    TEST_ASSERT(t != NULL);
+    TEST_ASSERT(term_as_church(t) == 2);
+    term_destroy(t);
+    return PASSED;
+}
+
+TEST(parser_double_app_func) {
+    term_t *t = term_eval(parse_string("(\\f. f (f x)) (\\a. a)"));
     TEST_ASSERT(t != NULL);
     TEST_ASSERT(t->type == TM_VAR);
-    TEST_ASSERT(t->data.var.sym == sym_intern("B"));
+    TEST_ASSERT(t->data.var.sym == sym_intern("x"));
+    term_destroy(t);
+    return PASSED;
+}
+
+TEST(parser_s_combinator_subst) {
+    // S k i -> i
+    // (\x.\y.\z. x z (y z)) (\a.\b. a) (\c. c)
+    term_t *t = term_eval(
+        parse_string("(\\x.\\y.\\z. x z (y z)) (\\a.\\b. a) (\\c. c)"));
+    TEST_ASSERT(t != NULL);
+    TEST_ASSERT(t->type == TM_ABS);
+    TEST_ASSERT(t->data.abs.body->type == TM_VAR);
+    TEST_ASSERT(t->data.abs.body->data.var.index == 0);
+    term_destroy(t);
+    return PASSED;
+}
+
+TEST(parser_curried_function_composition) {
+    // compose I I -> I
+    term_t *t =
+        term_eval(parse_string("(\\f.\\g.\\x. f (g x)) (\\a. a) (\\b. b)"));
+    TEST_ASSERT(t != NULL);
+    TEST_ASSERT(t->type == TM_ABS);
+    TEST_ASSERT(t->data.abs.body->type == TM_VAR);
+    TEST_ASSERT(t->data.abs.body->data.var.index == 0);
+    term_destroy(t);
+    return PASSED;
+}
+
+TEST(parser_free_func_param) {
+    // (\f. \x. f x) (\y. z) -> \x. z
+    term_t *t = term_eval(parse_string("(\\f. \\x. f x) (\\y. z)"));
+    TEST_ASSERT(t != NULL);
+    TEST_ASSERT(t->type == TM_ABS); // \x.
+    TEST_ASSERT(t->data.abs.body->data.var.index != 0);
     term_destroy(t);
     return PASSED;
 }
