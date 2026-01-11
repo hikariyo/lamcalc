@@ -42,7 +42,7 @@ sym_t sym_intern(const char *name) {
 }
 
 const char *sym_name(sym_t sym) {
-    if (sym < 0 || sym > _count) {
+    if (sym > _count) {
         return SYM_INVALID;
     }
     return _table[sym].name;
