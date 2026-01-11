@@ -194,6 +194,7 @@ term_t *parse(token_t **tokens, token_t *end) {
 
     _push_stack(sym_intern("*"));
     _push_stack(sym_intern("+"));
+    _push_stack(sym_intern("Y"));
 
     term_t *term = _parse(tokens, end);
     while (_tail != NULL) {

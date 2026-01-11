@@ -75,7 +75,7 @@ static term_t *_new_term(term_type_t type) {
 }
 
 // Consumes 'term'.
-static term_t *_eval_lim_depth(term_t *term, int depth) {
+static term_t *_eval_lim_depth_deep(term_t *term, int depth) {
     if (depth > TERM_EVAL_MAX_DEPTH) {
         term_destroy(term);
         printf("error: max recursion depth exceeded(possible infinite "
@@ -88,7 +88,7 @@ static term_t *_eval_lim_depth(term_t *term, int depth) {
         return term;
     }
     case TM_ABS: {
-        term_t *body = _eval_lim_depth(term->data.abs.body, depth + 1);
+        term_t *body = _eval_lim_depth_deep(term->data.abs.body, depth + 1);
         if (body == NULL) {
             free(term);
             return NULL;
@@ -99,14 +99,14 @@ static term_t *_eval_lim_depth(term_t *term, int depth) {
         return term_abs(param, body);
     }
     case TM_APP: {
-        term_t *left = _eval_lim_depth(term->data.app.left, depth + 1);
+        term_t *left = _eval_lim_depth_deep(term->data.app.left, depth + 1);
         if (left == NULL) {
             term_destroy(term->data.app.right);
             free(term);
             return NULL;
         }
 
-        term_t *right = _eval_lim_depth(term->data.app.right, depth + 1);
+        term_t *right = _eval_lim_depth_deep(term->data.app.right, depth + 1);
         if (right == NULL) {
             term_destroy(left);
             free(term);
@@ -118,10 +118,44 @@ static term_t *_eval_lim_depth(term_t *term, int depth) {
             term_t *body = _subst(left->data.abs.body, 0, right);
             free(left);
             term_destroy(right);
-            return _eval_lim_depth(body, depth + 1);
+            return _eval_lim_depth_deep(body, depth + 1);
         }
 
         return term_app(left, right);
+    }
+    }
+}
+
+static term_t *_eval_lim_depth_lazy(term_t *term, int depth) {
+    if (depth > TERM_EVAL_MAX_DEPTH) {
+        term_destroy(term);
+        printf("error: max recursion depth exceeded(possible infinite "
+               "recursion)\n");
+        return NULL;
+    }
+
+    switch (term->type) {
+    case TM_VAR:
+    case TM_ABS:
+        return term;
+    case TM_APP: {
+        term_t *left = _eval_lim_depth_lazy(term->data.app.left, depth + 1);
+        if (left == NULL) {
+            term_destroy(term->data.app.right);
+            free(term);
+            return NULL;
+        }
+
+        if (left->type == TM_ABS) {
+            term_t *body = _subst(left->data.abs.body, 0, term->data.app.right);
+            free(left);
+            term_destroy(term->data.app.right);
+            free(term);
+            return _eval_lim_depth_lazy(body, depth + 1);
+        }
+
+        free(term);
+        return term_app(left, term->data.app.right);
     }
     }
 }
@@ -145,9 +179,26 @@ term_t *term_eval(term_t *term) {
                                             term_app(term_var(b, 1),
                                                      term_var(f, 0))))));
 
+    term_t *Yl = term_abs(
+        x, term_app(term_var(f, 1), term_app(term_var(x, 0), term_var(x, 0))));
+    term_t *Yr = _copy(Yl);
+    term_t *Y = term_abs(f, term_app(Yl, Yr));
+
+    term = term_app(term_abs(sym_intern("Y"), term), Y);
     term = term_app(term_abs(sym_intern("+"), term), plus);
     term = term_app(term_abs(sym_intern("*"), term), mul);
-    return _eval_lim_depth(term, 0);
+
+    term = _eval_lim_depth_lazy(term, 0);
+    if (term == NULL) {
+        return NULL;
+    }
+
+    term = _eval_lim_depth_deep(term, 0);
+    if (term == NULL) {
+        return NULL;
+    }
+
+    return term;
 }
 
 term_t *term_var(sym_t sym, int index) {
