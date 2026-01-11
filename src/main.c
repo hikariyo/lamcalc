@@ -1,10 +1,12 @@
+// clang-format off
 #include "parser.h"
 #include "term.h"
+#include <stdio.h>
 #include <readline/history.h>
 #include <readline/readline.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+// clang-format on
 
 int main() {
     char *input = NULL;
