@@ -81,6 +81,7 @@ static term_t *_new_term(term_type_t type) {
 // Consumes 'term'.
 static term_t *_eval_lim_depth(term_t *term, int depth) {
     if (depth > TERM_EVAL_MAX_DEPTH) {
+        term_destroy(term);
         printf("error: max recursion depth exceeded(possible infinite "
                "recursion)\n");
         return NULL;
@@ -94,6 +95,7 @@ static term_t *_eval_lim_depth(term_t *term, int depth) {
     case TM_ABS: {
         term_t *body = _eval_lim_depth(term->data.abs.body, depth + 1);
         if (body == NULL) {
+            free(term);
             return NULL;
         }
 
@@ -104,11 +106,15 @@ static term_t *_eval_lim_depth(term_t *term, int depth) {
     case TM_APP: {
         term_t *left = _eval_lim_depth(term->data.app.left, depth + 1);
         if (left == NULL) {
+            term_destroy(term->data.app.right);
+            free(term);
             return NULL;
         }
 
         term_t *right = _eval_lim_depth(term->data.app.right, depth + 1);
         if (right == NULL) {
+            term_destroy(left);
+            free(term);
             return NULL;
         }
 
