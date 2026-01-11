@@ -159,9 +159,9 @@ term_t *term_eval(term_t *term) {
                     term_copy(True)));
 
     term_t *cons = term_abs(
-        a, term_abs(b, term_abs(f, term_app(term_var(f, 0),
-                                            term_app(term_var(a, 2),
-                                                     term_var(b, 1))))));
+        a, term_abs(
+               b, term_abs(f, term_app(term_app(term_var(f, 0), term_var(a, 2)),
+                                       term_var(b, 1)))));
 
     term_t *head = term_abs(
         p, term_app(term_var(p, 0), term_abs(a, term_abs(b, term_var(a, 1)))));
@@ -170,9 +170,13 @@ term_t *term_eval(term_t *term) {
         p, term_app(term_var(p, 0), term_abs(a, term_abs(b, term_var(b, 0)))));
 
     term_t *nil = term_abs(a, term_abs(b, term_var(b, 0)));
+
     term_t *isnil = term_abs(
-        n, term_app(term_app(term_var(n, 0), term_abs(x, term_copy(False))),
-                    term_copy(True)));
+        p,
+        term_app(
+            term_app(term_var(p, 0),
+                     term_abs(a, term_abs(b, term_abs(x, term_copy(False))))),
+            term_copy(True)));
 
     // term_t* parse(token_t** tokens, token_t* end)
     // should be kept updated with this
