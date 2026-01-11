@@ -148,7 +148,6 @@ static term_t *_eval_lim_depth_lazy(term_t *term, int depth) {
 
             term = body;
         } else {
-            right = _eval_lim_depth_lazy(right, depth + 1);
             return term_app(left, right);
         }
     }
