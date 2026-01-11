@@ -188,23 +188,35 @@ void term_destroy(term_t *term) {
     free(term);
 }
 
+static size_t _repr_size_t_size(size_t x) {
+    if (x == 0) {
+        return 1;
+    }
+    size_t res = 0;
+    while (x) {
+        res++;
+        x /= 10;
+    }
+    return res;
+}
+
 static size_t _repr_size(const term_t *term) {
     int church = term_as_church(term);
     if (church != TERM_INVALID_CHURCH) {
-        if (church == 0) {
-            return 1;
-        }
-        int res = 0;
-        while (church) {
-            res++;
-            church /= 10;
-        }
-        return res;
+        return _repr_size_t_size(church);
     }
 
     switch (term->type) {
     case TM_VAR:
-        return strlen(sym_name(term->data.var.sym));
+        // name(de bruijn index)
+        // name(FREE)
+
+        if (term->data.var.index < 0) {
+            return strlen(sym_name(term->data.var.sym)) + 6;
+        } else {
+            return strlen(sym_name(term->data.var.sym)) + 2 +
+                   _repr_size_t_size(term->data.var.index);
+        }
     case TM_ABS:
         return 2 + strlen(sym_name(term->data.abs.param)) +
                _repr_size(term->data.abs.body);
@@ -233,6 +245,31 @@ static void _repr(const term_t *term, char **p) {
             name++;
             now++;
         }
+        // The buffer size is calculated in advance.
+        *now = '(';
+        now++;
+
+        if (term->data.var.index >= 0) {
+            int x = snprintf(now, INT_MAX, "%d", term->data.var.index);
+            assert(x > 0);
+            now += x;
+        } else {
+            *now = 'F';
+            now++;
+
+            *now = 'R';
+            now++;
+
+            *now = 'E';
+            now++;
+
+            *now = 'E';
+            now++;
+        }
+
+        *now = ')';
+        now++;
+
         break;
     }
     case TM_APP: {
