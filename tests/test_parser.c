@@ -81,11 +81,10 @@ TEST(parser_s_combinator_subst) {
     // S k i -> i
     // (\x.\y.\z. x z (y z)) (\a.\b. a) (\c. c)
     term_t *t = term_eval(
-        parse_string("(\\x.\\y.\\z. x z (y z)) (\\a.\\b. a) (\\c. c)"));
+        parse_string("((\\x.\\y.\\z. x z (y z)) (\\a.\\b. a) (\\c. c)) A"));
     TEST_ASSERT(t != NULL);
-    TEST_ASSERT(t->type == TM_ABS);
-    TEST_ASSERT(t->data.abs.body->type == TM_VAR);
-    TEST_ASSERT(t->data.abs.body->data.var.index == 0);
+    TEST_ASSERT(t->type == TM_VAR);
+    TEST_ASSERT(t->data.var.sym == sym_intern("A"));
     term_destroy(t);
     return PASSED;
 }
@@ -93,11 +92,10 @@ TEST(parser_s_combinator_subst) {
 TEST(parser_curried_function_composition) {
     // compose I I -> I
     term_t *t =
-        term_eval(parse_string("(\\f.\\g.\\x. f (g x)) (\\a. a) (\\b. b)"));
+        term_eval(parse_string("((\\f.\\g.\\x. f (g x)) (\\a. a) (\\b. b)) A"));
     TEST_ASSERT(t != NULL);
-    TEST_ASSERT(t->type == TM_ABS);
-    TEST_ASSERT(t->data.abs.body->type == TM_VAR);
-    TEST_ASSERT(t->data.abs.body->data.var.index == 0);
+    TEST_ASSERT(t->type == TM_VAR);
+    TEST_ASSERT(t->data.var.sym == sym_intern("A"));
     term_destroy(t);
     return PASSED;
 }
@@ -108,16 +106,6 @@ TEST(parser_free_func_param) {
     TEST_ASSERT(t != NULL);
     TEST_ASSERT(t->type == TM_ABS); // \x.
     TEST_ASSERT(t->data.abs.body->data.var.index != 0);
-    term_destroy(t);
-    return PASSED;
-}
-
-TEST(parser_deep_beta_reduction) {
-    term_t *t = term_eval(parse_string("(\\f.\\x.(f x)) (\\y.y)"));
-    TEST_ASSERT(t != NULL);
-    TEST_ASSERT(t->type == TM_ABS);
-    TEST_ASSERT(t->data.abs.body->type == TM_VAR);
-    TEST_ASSERT(t->data.abs.body->data.var.index == 0);
     term_destroy(t);
     return PASSED;
 }

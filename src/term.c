@@ -6,15 +6,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-static term_t *_copy(const term_t *term) {
+term_t *term_copy(const term_t *term) {
     switch (term->type) {
     case TM_VAR:
         return term_var(term->data.var.sym, term->data.var.index);
     case TM_ABS:
-        return term_abs(term->data.abs.param, _copy(term->data.abs.body));
+        return term_abs(term->data.abs.param, term_copy(term->data.abs.body));
     case TM_APP:
-        return term_app(_copy(term->data.app.left),
-                        _copy(term->data.app.right));
+        return term_app(term_copy(term->data.app.left),
+                        term_copy(term->data.app.right));
     }
 }
 
@@ -40,7 +40,7 @@ static term_t *_subst(term_t *term, int index, const term_t *val) {
     switch (term->type) {
     case TM_VAR: {
         if (term->data.var.index == index) {
-            term_t *ret = _copy(val);
+            term_t *ret = term_copy(val);
             _shift(ret, index, 0);
             term_destroy(term);
             return ret;
@@ -66,58 +66,6 @@ static term_t *_new_term(term_type_t type) {
     assert(term != NULL);
     term->type = type;
     return term;
-}
-
-// Consumes 'term'.
-static term_t *_eval_lim_depth_deep(term_t *term, int depth) {
-    if (depth > TERM_EVAL_MAX_DEPTH) {
-        term_destroy(term);
-        printf("error: max recursion depth exceeded(possible infinite "
-               "recursion)\n");
-        return NULL;
-    }
-
-    switch (term->type) {
-    case TM_VAR: {
-        return term;
-    }
-    case TM_ABS: {
-        term_t *body = _eval_lim_depth_deep(term->data.abs.body, depth + 1);
-        if (body == NULL) {
-            free(term);
-            return NULL;
-        }
-
-        sym_t param = term->data.abs.param;
-        free(term);
-        return term_abs(param, body);
-    }
-    case TM_APP: {
-        term_t *left = _eval_lim_depth_deep(term->data.app.left, depth + 1);
-        if (left == NULL) {
-            term_destroy(term->data.app.right);
-            free(term);
-            return NULL;
-        }
-
-        term_t *right = _eval_lim_depth_deep(term->data.app.right, depth + 1);
-        if (right == NULL) {
-            term_destroy(left);
-            free(term);
-            return NULL;
-        }
-
-        free(term);
-        if (left->type == TM_ABS) {
-            term_t *body = _subst(left->data.abs.body, 0, right);
-            free(left);
-            term_destroy(right);
-            return _eval_lim_depth_deep(body, depth + 1);
-        }
-
-        return term_app(left, right);
-    }
-    }
 }
 
 static term_t *_eval_lim_depth_lazy(term_t *term, int depth) {
@@ -174,7 +122,7 @@ term_t *term_eval(term_t *term) {
 
     term_t *Yl = term_abs(
         x, term_app(term_var(f, 1), term_app(term_var(x, 0), term_var(x, 0))));
-    term_t *Yr = _copy(Yl);
+    term_t *Yr = term_copy(Yl);
     term_t *Y = term_abs(f, term_app(Yl, Yr));
 
     term_t *True = term_abs(a, term_abs(b, term_var(a, 1)));
@@ -206,8 +154,8 @@ term_t *term_eval(term_t *term) {
                        term_abs(v, term_var(v, 0)) // extract result
                        ))));
     term_t *ifz = term_abs(
-        n, term_app(term_app(term_var(n, 0), term_abs(x, _copy(False))),
-                    _copy(True)));
+        n, term_app(term_app(term_var(n, 0), term_abs(x, term_copy(False))),
+                    term_copy(True)));
 
     // term_t* parse(token_t** tokens, token_t* end)
     // should be kept updated with this
@@ -219,17 +167,7 @@ term_t *term_eval(term_t *term) {
     term = term_app(term_abs(sym_intern("+"), term), plus);
     term = term_app(term_abs(sym_intern("*"), term), mul);
 
-    term = _eval_lim_depth_lazy(term, 0);
-    if (term == NULL) {
-        return NULL;
-    }
-
-    // term = _eval_lim_depth_deep(term, 0);
-    // if (term == NULL) {
-    //     return NULL;
-    // }
-
-    return term;
+    return _eval_lim_depth_lazy(term, 0);
 }
 
 term_t *term_var(sym_t sym, int index) {
@@ -406,30 +344,53 @@ char *term_repr(const term_t *term) {
 }
 
 int term_as_church(const term_t *term) {
-    if (term->type != TM_ABS) {
+    term_t *t = term_copy(term);
+    term_t *outer = NULL;
+
+    if (t == NULL) {
         return TERM_INVALID_CHURCH;
     }
 
-    term = term->data.abs.body;
-    if (term->type != TM_ABS) {
+    t = _eval_lim_depth_lazy(t, 0);
+    if (t->type != TM_ABS) {
+        term_destroy(t);
         return TERM_INVALID_CHURCH;
     }
 
-    term = term->data.abs.body;
+    outer = t;
+    t = t->data.abs.body;
+    free(outer);
+    t = _eval_lim_depth_lazy(t, 0);
+
+    if (t->type != TM_ABS) {
+        term_destroy(t);
+        return TERM_INVALID_CHURCH;
+    }
+
+    outer = t;
+    t = t->data.abs.body;
+    free(outer);
+    t = _eval_lim_depth_lazy(t, 0);
 
     int res = 0;
-    while (term != NULL) {
-        if (term->type == TM_VAR && term->data.var.index == 0) {
+    while (t != NULL) {
+        if (t->type == TM_VAR && t->data.var.index == 0) {
+            term_destroy(t);
             break;
         }
 
-        if (term->type != TM_APP || term->data.app.left->type != TM_VAR ||
-            term->data.app.left->data.var.index != 1) {
+        if (t->type != TM_APP || t->data.app.left->type != TM_VAR ||
+            t->data.app.left->data.var.index != 1) {
+            term_destroy(t);
             return TERM_INVALID_CHURCH;
         }
 
+        outer = t;
+        t = t->data.app.right;
+        term_destroy(outer->data.app.left);
+        free(outer);
         res++;
-        term = term->data.app.right;
+        t = _eval_lim_depth_lazy(t, 0);
     }
 
     return res;

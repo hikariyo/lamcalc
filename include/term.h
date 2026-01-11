@@ -72,4 +72,8 @@ int term_as_church(const term_t *term);
 // Returns an owned pointer.
 term_t *term_from_church(int num);
 
+// Copies given term.
+// Returns an owned pointer.
+term_t *term_copy(const term_t *term);
+
 #endif // TERM_H
