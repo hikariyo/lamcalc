@@ -49,18 +49,18 @@ Welcome to the REPL of lamcalc, a simple lambda calculus interpreter.
 Input "exit" without quotes to exit (p: parse, e: eval, r: repr).
 > + 2 3
 5
-[ Done in 2.516ms | steps: 14 | p: 0.296, e: 1.356, r: 0.864 ]
+[ Done in 2.516ms | p: 0.296, e: 1.356, r: 0.864 ]
 > * 3 3
 9
-[ Done in 1.884ms | steps: 14 | p: 0.136, e: 0.566, r: 1.182 ]
+[ Done in 1.884ms | p: 0.136, e: 0.566, r: 1.182 ]
 > + 2 (* 5 6)
 32
-[ Done in 3.525ms | steps: 14 | p: 0.254, e: 0.861, r: 2.410 ]
+[ Done in 3.525ms | p: 0.254, e: 0.861, r: 2.410 ]
 > (\x.\y.x) 2 3
 2
-[ Done in 0.536ms | steps: 14 | p: 0.185, e: 0.312, r: 0.039 ]
+[ Done in 0.536ms | p: 0.185, e: 0.312, r: 0.039 ]
 > Y (\f.\n. iszero n 1 (* n (f (pred n)))) 4
 24
-[ Done in 1413.993ms | steps: 24 | p: 0.202, e: 2.272, r: 1411.519 ]
+[ Done in 1413.993ms | p: 0.202, e: 2.272, r: 1411.519 ]
 > exit
 ```
