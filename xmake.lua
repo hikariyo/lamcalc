@@ -3,6 +3,7 @@ set_version("0.1.0")
 set_languages("c11")
 
 add_rules("mode.debug", "mode.release")
+add_defines("_GNU_SOURCE", "_POSIX_C_SOURCE=200809L")
 
 if is_mode("debug") then
     set_policy("build.sanitizer.address", true)
@@ -17,7 +18,6 @@ target("lamcalc")
     set_kind("binary")
     add_files("src/*.c")
     add_syslinks("readline")
-    add_defines("_GNU_SOURCE", "_POSIX_C_SOURCE=199309L")
     if is_mode("debug") then
         add_runenvs("ASAN_OPTIONS", "detect_leaks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_string_checks=1")
         add_runenvs("UBSAN_OPTIONS", "print_stacktrace=1")
