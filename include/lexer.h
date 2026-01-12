@@ -14,6 +14,7 @@ typedef enum {
 typedef struct token {
     token_type_t type;
     sym_t sym;          // Associated symbol (only valid for TOKEN_NAME)
+    int pos;            // Position in the input string (for error reporting)
     struct token *next; // Pointer to the next token in the stream
 } token_t;
 

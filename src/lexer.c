@@ -8,17 +8,19 @@ static int _is_name(char ch) {
     return !(isspace(ch) || ch == '(' || ch == ')' || ch == '\\' || ch == '.');
 }
 
-static token_t *_create_token(sym_t sym, token_type_t type, token_t *next) {
+static token_t *_create_token(sym_t sym, token_type_t type, int pos,
+                              token_t *next) {
     token_t *token = (token_t *)malloc(sizeof(token_t));
     assert(token != NULL);
     token->sym = sym;
     token->type = type;
     token->next = next;
+    token->pos = pos;
     return token;
 }
 
 token_t *lex_string(const char *str) {
-    size_t len = strlen(str);
+    int len = (int)strlen(str);
 
     token_t dummy_head;
     token_t *tail_prev = &dummy_head;
@@ -26,7 +28,7 @@ token_t *lex_string(const char *str) {
 
     char buf[SYM_MAXLEN + 1];
 
-    for (size_t i = 0; i < len; i++) {
+    for (int i = 0; i < len; i++) {
         char now = str[i];
         if (isspace(now)) {
             continue;
@@ -34,15 +36,15 @@ token_t *lex_string(const char *str) {
 
         token_t *tail = tail_prev->next;
         if (now == '(') {
-            tail_prev->next = _create_token(-1, TOKEN_LP, tail);
+            tail_prev->next = _create_token(-1, TOKEN_LP, i, tail);
         } else if (now == ')') {
-            tail_prev->next = _create_token(-1, TOKEN_RP, tail);
+            tail_prev->next = _create_token(-1, TOKEN_RP, i, tail);
         } else if (now == '\\') {
-            tail_prev->next = _create_token(-1, TOKEN_LAMBDA, tail);
+            tail_prev->next = _create_token(-1, TOKEN_LAMBDA, i, tail);
         } else if (now == '.') {
-            tail_prev->next = _create_token(-1, TOKEN_DOT, tail);
+            tail_prev->next = _create_token(-1, TOKEN_DOT, i, tail);
         } else {
-            size_t j = i;
+            int j = i;
             while (j < len && _is_name(str[j])) {
                 j++;
             }
@@ -52,7 +54,8 @@ token_t *lex_string(const char *str) {
             buf[j - i] = '\0';
             i = j - 1;
 
-            tail_prev->next = _create_token(sym_intern(buf), TOKEN_NAME, tail);
+            tail_prev->next =
+                _create_token(sym_intern(buf), TOKEN_NAME, i, tail);
         }
 
         tail_prev = tail_prev->next;

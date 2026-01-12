@@ -51,8 +51,9 @@ static term_t *_parse_abs(token_t **tokens, token_t *end) {
         printf("error: unexpected null in rule AbsTerm; expected NAME\n");
         return NULL;
     } else if (t->type != TOKEN_LAMBDA) {
-        printf("error: unexpected token %s in rule AbsTerm; expected LAMBDA\n",
-               lex_token_type_repr(t->type));
+        printf("error: unexpected token %s at pos %d in rule AbsTerm; expected "
+               "LAMBDA\n",
+               lex_token_type_repr(t->type), t->pos);
         return NULL;
     }
 
@@ -62,8 +63,9 @@ static term_t *_parse_abs(token_t **tokens, token_t *end) {
         printf("error: unexpected null in rule AbsTerm; expected NAME\n");
         return NULL;
     } else if (t->type != TOKEN_NAME) {
-        printf("error: unexpected token %s in rule AbsTerm; expected NAME\n",
-               lex_token_type_repr(t->type));
+        printf("error: unexpected token %s at pos %d in rule AbsTerm; expected "
+               "NAME\n",
+               lex_token_type_repr(t->type), t->pos);
         return NULL;
     }
 
@@ -75,8 +77,9 @@ static term_t *_parse_abs(token_t **tokens, token_t *end) {
         printf("error: unexpected null in rule AbsTerm; expected DOT\n");
         return NULL;
     } else if (t->type != TOKEN_DOT) {
-        printf("error: unexpected token %s in rule AbsTerm; expected DOT\n",
-               lex_token_type_repr(t->type));
+        printf("error: unexpected token %s at pos %d in rule AbsTerm; expected "
+               "DOT\n",
+               lex_token_type_repr(t->type), t->pos);
         return NULL;
     }
 
@@ -134,7 +137,8 @@ static term_t *_parse_atom(token_t **tokens, token_t *end,
         t = t->next;
         token_t *rp = _find_rp(*tokens);
         if (rp == NULL) {
-            printf("error: no matched right parenthesis in rule Atom\n");
+            printf("error: no matched RP for LP at pos %d in rule Atom\n",
+                   t->pos);
             return NULL;
         }
         term_t *res = _parse(&t, rp);
@@ -156,13 +160,13 @@ static term_t *_parse_atom(token_t **tokens, token_t *end,
     }
     default: {
         if (accept_abs_term) {
-            printf(
-                "error: unexpected token %s in rule Atom; expected NAME | LP\n",
-                lex_token_type_repr(t->type));
+            printf("error: unexpected token %s at pos %d in rule Atom; "
+                   "expected NAME | LP\n",
+                   lex_token_type_repr(t->type), t->pos);
         } else {
-            printf("error: unexpected token %s in rule Atom; expected NAME | "
-                   "LP | LAMBDA\n",
-                   lex_token_type_repr(t->type));
+            printf("error: unexpected token %s at pos %d in rule Atom; "
+                   "expected NAME | LP | LAMBDA\n",
+                   lex_token_type_repr(t->type), t->pos);
         }
         return NULL;
     }
@@ -200,9 +204,9 @@ static term_t *_parse(token_t **tokens, token_t *end) {
         return now;
     }
     default:
-        printf("error: unexpected token %s in rule Term; expected LAMBDA | "
-               "NAME | LP\n",
-               lex_token_type_repr((*tokens)->type));
+        printf("error: unexpected token %s at pos %d in rule Term; expected "
+               "LAMBDA | NAME | LP\n",
+               lex_token_type_repr((*tokens)->type), (*tokens)->pos);
         return NULL;
     }
 }
