@@ -118,7 +118,8 @@ static int _convert_to_int(const char *s) {
     return res;
 }
 
-static term_t *_parse_atom(token_t **tokens) {
+static term_t *_parse_atom(token_t **tokens, token_t *end,
+                           int accept_abs_term) {
     token_t *t = *tokens;
     switch (t->type) {
     case TOKEN_NAME: {
@@ -144,10 +145,27 @@ static term_t *_parse_atom(token_t **tokens) {
         *tokens = t->next;
         return res;
     }
-    default:
-        printf("error: unexpected token %s in rule Atom; expected NAME | LP\n",
-               lex_token_type_repr(t->type));
+    case TOKEN_LAMBDA: {
+        if (accept_abs_term) {
+            term_t *res = _parse_abs(tokens, end);
+            if (res == NULL) {
+                return NULL;
+            }
+            return res;
+        }
+    }
+    default: {
+        if (accept_abs_term) {
+            printf(
+                "error: unexpected token %s in rule Atom; expected NAME | LP\n",
+                lex_token_type_repr(t->type));
+        } else {
+            printf("error: unexpected token %s in rule Atom; expected NAME | "
+                   "LP | LAMBDA\n",
+                   lex_token_type_repr(t->type));
+        }
         return NULL;
+    }
     }
 }
 
@@ -165,7 +183,7 @@ static term_t *_parse(token_t **tokens, token_t *end) {
     case TOKEN_LP: {
         term_t *now = NULL;
         while (*tokens != end) {
-            term_t *atom = _parse_atom(tokens);
+            term_t *atom = _parse_atom(tokens, end, now != NULL);
 
             // A NULL returned from parse_atom signals a syntax error.
             if (atom == NULL) {

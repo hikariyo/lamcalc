@@ -7,8 +7,8 @@ struct token;
 // Syntax rules:
 // Term    ::= AbsTerm | AppTerm
 // AbsTerm ::= '\' NAME '.' Term
-// AppTerm ::= Atom { Atom }
-// Atom    ::= NAME | LP Term RP
+// AppTerm ::= Atom { Atom | AbsTerm }
+// Atom    ::= NAME | LP Term RP ; VarTerm is single Atom
 
 // Parses tokens into a term tree using recursive descent.
 // Returns owned pointer, or NULL on syntax error; does not free original
