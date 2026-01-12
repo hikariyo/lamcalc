@@ -46,7 +46,7 @@ xmake run lamcalc
 **Example interaction**: 
 ```text
 Welcome to the REPL of lamcalc, a simple lambda calculus interpreter.
-Input "exit" without quotes to exit. (p: parse, e: eval, r: repr)
+Input "exit" without quotes to exit (p: parse, e: eval, r: repr).
 > + 2 3
 5
 [ Done in 2.516ms | steps: 14 | p: 0.296, e: 1.356, r: 0.864 ]

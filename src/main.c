@@ -33,8 +33,8 @@ int main() {
 
     printf("Welcome to the REPL of lamcalc, a simple lambda calculus "
            "interpreter.\n");
-    printf("Input \"exit\" without quotes to exit. (p: parse, e: eval, r: "
-           "repr)\n");
+    printf("Input \"exit\" without quotes to exit (p: parse, e: eval, r: "
+           "repr).\n");
     struct timespec start, endparse, endeval, endrepr;
     while ((input = readline("> ")) != NULL) {
         if (!strcmp(input, "exit")) {
