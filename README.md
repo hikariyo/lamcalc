@@ -43,18 +43,24 @@ xmake f -m release # or debug if you want
 xmake run lamcalc
 ```
 
-**Example interaction**:
-
+**Example interaction**: 
 ```text
+Welcome to the REPL of lamcalc, a simple lambda calculus interpreter.
+Input "exit" without quotes to exit. (p: parse, e: eval, r: repr)
 > + 2 3
-5 (646.00 μs)
+5
+[ Done in 1.923ms | p: 0.247, e: 1.154, r: 0.522 ]
 > * 3 3
-9 (958.00 μs)
+9
+[ Done in 0.893ms | p: 0.098, e: 0.234, r: 0.561 ]
 > + 2 (* 5 6)
-32 (1.47 ms)
+32
+[ Done in 2.892ms | p: 0.338, e: 0.501, r: 2.053 ]
 > (\x.\y.x) 2 3
-2 (489.00 μs)
+2
+[ Done in 0.323ms | p: 0.114, e: 0.190, r: 0.019 ]
 > Y (\f.\n. iszero n 1 (* n (f (pred n)))) 4
-24 (1288.64 ms)
+24
+[ Done in 1266.650ms | p: 0.251, e: 2.273, r: 1264.126 ]
 > exit
 ```
