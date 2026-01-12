@@ -55,16 +55,10 @@ term_t *term_app(term_t *left, term_t *right);
 // Destroys the term and all its children. Consumes 'term'.
 void term_destroy(term_t *term);
 
-// Evaluates given term, also counts the number of steps.
-// Pass steps as NULL if you don't want to count steps.
+// Evaluates given term.
 // Note: This function takes the ownership of term.
 // Returns an owned pointer, or NULL if an error occurs.
-term_t *term_eval_steps(term_t *term, int *steps);
-
-// Evaluates given term with no step counting.
-// Note: This function takes the ownership of term.
-// Returns an owned pointer, or NULL if an error occurs.
-#define term_eval(term) term_eval_steps(term, NULL)
+term_t *term_eval(term_t *term);
 
 // Gets a string representation of the term.
 // Returns an owned pointer.

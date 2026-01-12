@@ -9,9 +9,8 @@
 #include <time.h>
 // clang-format on
 
-void print_execution_time(int steps, struct timespec start,
-                          struct timespec endparse, struct timespec endeval,
-                          struct timespec endrepr) {
+void print_execution_time(struct timespec start, struct timespec endparse,
+                          struct timespec endeval, struct timespec endrepr) {
     double p = (double)(endparse.tv_sec - start.tv_sec) * 1e3 +
                (double)(endparse.tv_nsec - start.tv_nsec) / 1e6;
 
@@ -24,8 +23,8 @@ void print_execution_time(int steps, struct timespec start,
     double total = p + e + r;
     const char *DIM = "\033[2m";
     const char *RESET = "\033[0m";
-    printf("%s[ Done in %.3fms | steps: %d | p: %.3f, e: %.3f, r: %.3f ]%s\n",
-           DIM, total, steps, p, e, r, RESET);
+    printf("%s[ Done in %.3fms | p: %.3f, e: %.3f, r: %.3f ]%s\n", DIM, total,
+           p, e, r, RESET);
 }
 
 int main() {
@@ -56,8 +55,7 @@ int main() {
             goto next;
         }
 
-        int steps = 0;
-        term = term_eval_steps(term, &steps);
+        term = term_eval(term);
         clock_gettime(CLOCK_MONOTONIC, &endeval);
 
         if (term == NULL) {
@@ -70,7 +68,7 @@ int main() {
         printf("%s\n", repr);
         free(repr);
         term_destroy(term);
-        print_execution_time(steps, start, endparse, endeval, endrepr);
+        print_execution_time(start, endparse, endeval, endrepr);
 
         fflush(stdout);
     next:

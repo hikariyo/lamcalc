@@ -68,7 +68,7 @@ static term_t *_new_term(term_type_t type) {
     return term;
 }
 
-static term_t *_eval_lim_depth_lazy(term_t *term, int depth, int *steps) {
+static term_t *_eval_lim_depth_lazy(term_t *term, int depth) {
     if (depth > TERM_EVAL_MAX_DEPTH) {
         term_destroy(term);
         printf("error: max recursion depth exceeded(possible infinite "
@@ -81,8 +81,7 @@ static term_t *_eval_lim_depth_lazy(term_t *term, int depth, int *steps) {
             return term;
         }
 
-        term_t *left =
-            _eval_lim_depth_lazy(term->data.app.left, depth + 1, steps);
+        term_t *left = _eval_lim_depth_lazy(term->data.app.left, depth + 1);
         term_t *right = term->data.app.right;
         free(term);
         if (left == NULL) {
@@ -91,9 +90,6 @@ static term_t *_eval_lim_depth_lazy(term_t *term, int depth, int *steps) {
         }
 
         if (left->type == TM_ABS) {
-            if (steps != NULL) {
-                *steps = *steps + 1;
-            }
             term_t *body = _subst(left->data.abs.body, 0, right);
             free(left);
             term_destroy(right);
@@ -105,7 +101,7 @@ static term_t *_eval_lim_depth_lazy(term_t *term, int depth, int *steps) {
     }
 }
 
-term_t *term_eval_steps(term_t *term, int *steps) {
+term_t *term_eval(term_t *term) {
     sym_t f = sym_intern("f");
     sym_t x = sym_intern("x");
     sym_t a = sym_intern("a");
@@ -197,7 +193,7 @@ term_t *term_eval_steps(term_t *term, int *steps) {
     term = term_app(term_abs(sym_intern("+"), term), plus);
     term = term_app(term_abs(sym_intern("*"), term), mul);
 
-    return _eval_lim_depth_lazy(term, 0, steps);
+    return _eval_lim_depth_lazy(term, 0);
 }
 
 term_t *term_var(sym_t sym, int index) {
@@ -350,7 +346,7 @@ int term_as_church(const term_t *term) {
         return TERM_INVALID_CHURCH;
     }
 
-    t = _eval_lim_depth_lazy(t, 0, NULL);
+    t = _eval_lim_depth_lazy(t, 0);
     if (t->type != TM_ABS) {
         term_destroy(t);
         return TERM_INVALID_CHURCH;
@@ -359,7 +355,7 @@ int term_as_church(const term_t *term) {
     outer = t;
     t = t->data.abs.body;
     free(outer);
-    t = _eval_lim_depth_lazy(t, 0, NULL);
+    t = _eval_lim_depth_lazy(t, 0);
 
     if (t->type != TM_ABS) {
         term_destroy(t);
@@ -369,7 +365,7 @@ int term_as_church(const term_t *term) {
     outer = t;
     t = t->data.abs.body;
     free(outer);
-    t = _eval_lim_depth_lazy(t, 0, NULL);
+    t = _eval_lim_depth_lazy(t, 0);
 
     int res = 0;
     while (t != NULL) {
@@ -389,7 +385,7 @@ int term_as_church(const term_t *term) {
         term_destroy(outer->data.app.left);
         free(outer);
         res++;
-        t = _eval_lim_depth_lazy(t, 0, NULL);
+        t = _eval_lim_depth_lazy(t, 0);
     }
 
     return res;
