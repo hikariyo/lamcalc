@@ -6,7 +6,7 @@ struct token;
 
 // Syntax rules:
 // Term    ::= AbsTerm | AppTerm
-// AbsTerm ::= '\' NAME '.' Term
+// AbsTerm ::= LAMBDA NAME { NAME } DOT Term
 // AppTerm ::= Atom { Atom | AbsTerm }
 // Atom    ::= NAME | LP Term RP ; VarTerm is single Atom
 

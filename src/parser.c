@@ -70,13 +70,28 @@ static term_t *_parse_abs(token_t **tokens, token_t *end) {
     }
 
     _push_stack(t->sym);
-    sym_t param = t->sym;
 
+    // Placeholder.
+    term_t *dummy = term_var(-1, -1);
+    term_t *outer = term_abs(t->sym, dummy);
+    term_t *inner = outer;
     t = t->next;
+
+    int name_count = 1;
+    while (t != NULL && t->type == TOKEN_NAME) {
+        inner->data.abs.body = term_abs(t->sym, dummy);
+        inner = inner->data.abs.body;
+        _push_stack(t->sym);
+        name_count++;
+        t = t->next;
+    }
+
     if (t == NULL) {
+        term_destroy(outer);
         printf("error: unexpected null in rule AbsTerm; expected DOT\n");
         return NULL;
     } else if (t->type != TOKEN_DOT) {
+        term_destroy(outer);
         printf("error: unexpected token %s at pos %d in rule AbsTerm; expected "
                "DOT\n",
                lex_token_type_repr(t->type), t->pos);
@@ -85,14 +100,21 @@ static term_t *_parse_abs(token_t **tokens, token_t *end) {
 
     t = t->next;
     term_t *body = _parse(&t, end);
-    _pop_stack();
+
+    for (int _ = 0; _ < name_count; _++) {
+        _pop_stack();
+    }
+
     // Body will be null on syntax error.
     if (body == NULL) {
+        term_destroy(outer);
         return NULL;
     }
 
     *tokens = t;
-    return term_abs(param, body);
+    term_destroy(dummy);
+    inner->data.abs.body = body;
+    return outer;
 }
 
 static token_t *_find_rp(token_t *t) {
